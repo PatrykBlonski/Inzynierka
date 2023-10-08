@@ -94,6 +94,14 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
 
     tb_saveJSON_ls->setBounds (746, 41, 34, 14);
 
+    tb_calibration.reset (new juce::TextButton ("new button"));
+    addAndMakeVisible (tb_calibration.get());
+    tb_calibration->setButtonText (TRANS("Calibrate"));
+    tb_calibration->addListener (this);
+    tb_calibration->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff3c393c));
+
+    tb_calibration->setBounds (448, 328, 104, 32);
+
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -233,6 +241,7 @@ PluginEditor::~PluginEditor()
     SL_num_loudspeakers = nullptr;
     tb_loadJSON_src = nullptr;
     tb_saveJSON_ls = nullptr;
+    tb_calibration = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -559,6 +568,19 @@ void PluginEditor::paint (juce::Graphics& g)
 
     }
 
+    {
+        int x = 437, y = 308, width = 124, height = 68;
+        juce::Colour fillColour = juce::Colour (0x10f4f4f4);
+        juce::Colour strokeColour = juce::Colour (0x67a0a0a0);
+        //[UserPaintCustomArguments] Customize the painting arguments here..
+        //[/UserPaintCustomArguments]
+        g.setColour (fillColour);
+        g.fillRect (x, y, width, height);
+        g.setColour (strokeColour);
+        g.drawRect (x, y, width, height, 1);
+
+    }
+
     //[UserPaint] Add your own custom painting code here..
 
 	g.setColour(Colours::white);
@@ -701,6 +723,11 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
             }
         });
         //[/UserButtonCode_tb_saveJSON_ls]
+    }
+    else if (buttonThatWasClicked == tb_calibration.get())
+    {
+        //[UserButtonCode_tb_calibration] -- add your button handler code here..
+        //[/UserButtonCode_tb_calibration]
     }
 
     //[UserbuttonClicked_Post]
@@ -882,6 +909,8 @@ BEGIN_JUCER_METADATA
           strokeColour="solid: ffb9b9b9"/>
     <RECT pos="0 384 922 2" fill="solid: 61a52a" hasStroke="1" stroke="2, mitered, butt"
           strokeColour="solid: ffb9b9b9"/>
+    <RECT pos="437 308 124 68" fill="solid: 10f4f4f4" hasStroke="1" stroke="0.8, mitered, butt"
+          strokeColour="solid: 67a0a0a0"/>
   </BACKGROUND>
   <COMBOBOX name="new combo box" id="5a2f99f88aa51390" memberName="CBsourceDirsPreset"
             virtualName="" explicitFocusOrder="0" pos="88 66 112 20" editable="0"
@@ -909,6 +938,9 @@ BEGIN_JUCER_METADATA
               virtualName="" explicitFocusOrder="0" pos="746 41 34 14" bgColOff="ff224d97"
               bgColOn="ff181f9a" buttonText="Export" connectedEdges="0" needsCallback="1"
               radioGroupId="0"/>
+  <TEXTBUTTON name="new button" id="4288576c9eb666b4" memberName="tb_calibration"
+              virtualName="" explicitFocusOrder="0" pos="448 328 104 32" bgColOff="ff3c393c"
+              buttonText="Calibrate" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

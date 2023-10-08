@@ -119,6 +119,7 @@ private:
     std::unique_ptr<juce::Slider> SL_num_loudspeakers;
     std::unique_ptr<juce::TextButton> tb_loadJSON_src;
     std::unique_ptr<juce::TextButton> tb_saveJSON_ls;
+    std::unique_ptr<juce::TextButton> tb_calibration;
 
 
     //==============================================================================
