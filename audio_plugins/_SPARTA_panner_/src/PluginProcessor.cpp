@@ -22,11 +22,22 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
+{
+    AudioProcessorValueTreeState::ParameterLayout layout;
+
+    for (int i = 1; i < 9; ++i)
+        layout.add(std::make_unique<AudioParameterInt>(String(i), String(i), 0, i, 0));
+
+    return layout;
+}
+
 PluginProcessor::PluginProcessor() : 
 	AudioProcessor(BusesProperties()
 		.withInput("Input", AudioChannelSet::discreteChannels(64), true)
 	    .withOutput("Output", AudioChannelSet::discreteChannels(64), true))
 {
+    AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
 	panner_create(&hPan);
     refreshWindow = true;
     startTimer(TIMER_PROCESSING_RELATED, 80); 
@@ -35,6 +46,32 @@ PluginProcessor::PluginProcessor() :
 PluginProcessor::~PluginProcessor()
 {
 	panner_destroy(&hPan);
+}
+
+void PluginProcessor::startCalibration() {
+    calibrating = true;
+    phase = 0.0;
+    timeElapsed = 0.0;
+    frequency = startFrequency;
+    currentSpeaker = LOUDSPEAKER_ONE;
+}
+
+void PluginProcessor::endCalibration() {
+    if (currentSpeaker == LOUDSPEAKER_ONE) {
+        currentSpeaker = LOUDSPEAKER_TWO;
+        phase = 0.0;
+        timeElapsed = 0.0;
+        frequency = startFrequency;
+    }
+    else if (currentSpeaker == LOUDSPEAKER_TWO) {
+        currentSpeaker = NOT_CALIBRATING;
+        calibrating = 0;
+        // If there are more loudspeakers, move to the next one. Otherwise, end the calibration process.
+    }
+}
+
+double PluginProcessor::computeSweepFrequency(double time) {
+    return jmap(time, 0.0, duration, startFrequency, endFrequency);        
 }
 
 void PluginProcessor::setParameter (int index, float newValue)
@@ -274,27 +311,65 @@ void PluginProcessor::releaseResources()
     isPlaying = false;
 }
 
-void PluginProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& /*midiMessages*/)
-{
-    int nCurrentBlockSize = nHostBlockSize = buffer.getNumSamples();
-    nNumInputs = jmin(getTotalNumInputChannels(), buffer.getNumChannels());
-    nNumOutputs = jmin(getTotalNumOutputChannels(), buffer.getNumChannels());
-    float** bufferData = buffer.getArrayOfWritePointers();
-    float* pFrameData[MAX_NUM_CHANNELS];
-    int frameSize = panner_getFrameSize();
+void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer, int channel) {
+    const int numSamples = buffer.getNumSamples();
+    for (int sample = 0; sample < numSamples; ++sample) {
+        // Compute the instantaneous frequency for the sweep
+        frequency = computeSweepFrequency(timeElapsed);
 
-    if((nCurrentBlockSize % frameSize == 0)){ /* divisible by frame size */
-       for (int frame = 0; frame < nCurrentBlockSize/frameSize; frame++) {
-           for (int ch = 0; ch < buffer.getNumChannels(); ch++)
-               pFrameData[ch] = &bufferData[ch][frame*frameSize];
+        // Compute the sample of the sine sweep
+        float sineSample = std::sin(phase);
 
-           /* perform processing */
-           panner_process(hPan, pFrameData, pFrameData, nNumInputs, nNumOutputs, frameSize);
-       }
+        // Write this sample to all output channels (you can change this if needed)
+        buffer.setSample(channel, sample, sineSample);
+
+        // Increment phase and wrap if it exceeds 2*PI
+        phase += (2.0 * double_Pi * frequency) * deltaT;
+        if (phase > 2.0 * double_Pi) {
+            phase -= 2.0 * double_Pi;
+        }
+
+        // Update time elapsed
+        timeElapsed += deltaT;
+
+        // Stop the sweep if the duration has been reached
+        if (timeElapsed >= duration) {
+            endCalibration();
+            break;
+        }
     }
-    else
-       buffer.clear();
 }
+
+void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages) {
+    // Get some important details
+    const int totalNumInputChannels = getTotalNumInputChannels();
+    const int totalNumOutputChannels = getTotalNumOutputChannels();
+    const int numSamples = buffer.getNumSamples();
+    const double sampleRate = getSampleRate();
+    const double deltaT = 1.0 / sampleRate;  // Time increment per sample
+    // Clear any unused channels
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
+        buffer.clear(i, 0, numSamples);
+    }
+
+    //if (calibrating) {
+    //    // Store the microphone input for the duration of the sine sweep.
+    //    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+    //        micBuffer.copyFrom(channel, 0, buffer, channel, 0, numSamples);
+    //    }
+    //}
+
+    if (calibrating) {
+        if (currentSpeaker == LOUDSPEAKER_ONE) {
+            generateSine(deltaT, buffer, 0);
+        }
+        else if (currentSpeaker == LOUDSPEAKER_TWO) {
+            generateSine(deltaT, buffer, 1);
+        }
+    }
+}
+
+
 
 //==============================================================================
 bool PluginProcessor::hasEditor() const

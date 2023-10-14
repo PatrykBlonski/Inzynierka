@@ -49,11 +49,22 @@ enum {
     k_NumOfParameters
 };
 
+enum LoudspeakerStates {
+    NOT_CALIBRATING,
+    LOUDSPEAKER_ONE,
+    LOUDSPEAKER_TWO,
+    // Add more states if you have more loudspeakers
+};
+
+
+
 class PluginProcessor  : public AudioProcessor,
                          public MultiTimer,
                          public VSTCallbackHandler
 {
 public:
+
+    //AudioProcessorValueTreeState parameters;
     /* Get functions */
     void* getFXHandle() { return hPan; }
 	bool getIsPlaying() { return isPlaying; }
@@ -92,6 +103,17 @@ private:
     File lastDir;
     ValueTree elements {"SourcesOrLoudspeakers"}; 
     
+    //new variables
+    bool calibrating = false;  // To check if calibration is active
+    double phase = 0.0;        // Phase for our sine wave generation
+    double frequency = 20.0;   // Starting frequency
+    const double startFrequency = 20.0;
+    const double endFrequency = 20000.0;
+    const double duration = 10.0;   // Duration in seconds
+    double timeElapsed = 0.0;  // Keep track of how long the sweep has been playing
+    AudioBuffer<float> micBuffer;  // A buffer to store the microphone input.
+    LoudspeakerStates currentSpeaker = NOT_CALIBRATING;
+
     void timerCallback(int timerID) override
     {
         switch(timerID){
@@ -118,6 +140,10 @@ private:
 public:
     PluginProcessor();
     ~PluginProcessor();
+    double computeSweepFrequency(double time);
+    void PluginProcessor::startCalibration();
+    void PluginProcessor::endCalibration();
+    void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer, int channel);
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -145,6 +171,7 @@ public:
     void changeProgramName(int index, const String& newName) override;
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
