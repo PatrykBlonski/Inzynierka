@@ -109,10 +109,13 @@ private:
     double frequency = 20.0;   // Starting frequency
     const double startFrequency = 20.0;
     const double endFrequency = 20000.0;
-    const double duration = 10.0;   // Duration in seconds
+    const double duration = 5.0;   // Duration in seconds
     double timeElapsed = 0.0;  // Keep track of how long the sweep has been playing
-    AudioBuffer<float> micBuffer;  // A buffer to store the microphone input.
+    AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
     LoudspeakerStates currentSpeaker = NOT_CALIBRATING;
+    bool isRecording = false;
+    int currentRecordingPosition = 0;
+
 
     void timerCallback(int timerID) override
     {
@@ -144,6 +147,7 @@ public:
     void PluginProcessor::startCalibration();
     void PluginProcessor::endCalibration();
     void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer, int channel);
+    void PluginProcessor::saveBufferToWav();
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;

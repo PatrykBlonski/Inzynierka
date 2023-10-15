@@ -38,8 +38,9 @@ PluginProcessor::PluginProcessor() :
 	    .withOutput("Output", AudioChannelSet::discreteChannels(64), true))
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
-	panner_create(&hPan);
+    recordingBuffer.setSize(2, 48000 * 5);
     refreshWindow = true;
+    panner_create(&hPan);
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
@@ -54,6 +55,8 @@ void PluginProcessor::startCalibration() {
     timeElapsed = 0.0;
     frequency = startFrequency;
     currentSpeaker = LOUDSPEAKER_ONE;
+    isRecording = true;
+    currentRecordingPosition = 0;
 }
 
 void PluginProcessor::endCalibration() {
@@ -71,7 +74,7 @@ void PluginProcessor::endCalibration() {
 }
 
 double PluginProcessor::computeSweepFrequency(double time) {
-    return jmap(time, 0.0, duration, startFrequency, endFrequency);        
+    return jmap(time, 0.0, duration * 5, startFrequency, endFrequency);        
 }
 
 void PluginProcessor::setParameter (int index, float newValue)
@@ -352,24 +355,59 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
         buffer.clear(i, 0, numSamples);
     }
 
-    //if (calibrating) {
-    //    // Store the microphone input for the duration of the sine sweep.
-    //    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-    //        micBuffer.copyFrom(channel, 0, buffer, channel, 0, numSamples);
-    //    }
-    //}
+
 
     if (calibrating) {
         if (currentSpeaker == LOUDSPEAKER_ONE) {
-            generateSine(deltaT, buffer, 0);
+            generateSine(deltaT, buffer, 2);
         }
         else if (currentSpeaker == LOUDSPEAKER_TWO) {
-            generateSine(deltaT, buffer, 1);
+            isRecording = false;
+            generateSine(deltaT, buffer, 3);
         }
+    }
+
+    if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
+        for (int channel = 0; channel < 2; ++channel) {
+            recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+        }
+        currentRecordingPosition += buffer.getNumSamples();
     }
 }
 
+void PluginProcessor::saveBufferToWav()
+{
+    // File path
+    juce::File outputFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("recorded_audio.wav");
 
+    // Create an AudioFormatManager and register the WAV format
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();  // This registers the WAV format among others
+
+    // Find the WAV format
+    juce::AudioFormat* wavFormat = formatManager.findFormatForFileExtension("wav");
+    if (wavFormat == nullptr)
+    {
+        // Error handling: WAV format not found
+        return;
+    }
+
+    // Create a writer for the specified file and format
+    std::unique_ptr<juce::AudioFormatWriter> writer(wavFormat->createWriterFor(
+        new juce::FileOutputStream(outputFile),
+        getSampleRate(),
+        recordingBuffer.getNumChannels(),
+        16,  // Bit depth, e.g., 16 bits
+        {},  // No metadata
+        0    // Use the default quality
+    ));
+
+    if (writer.get() != nullptr)
+    {
+        // Write the entire buffer to the file
+        writer->writeFromAudioSampleBuffer(recordingBuffer, 0, recordingBuffer.getNumSamples());
+    }
+}
 
 //==============================================================================
 bool PluginProcessor::hasEditor() const
