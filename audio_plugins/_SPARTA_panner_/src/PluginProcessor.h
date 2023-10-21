@@ -63,7 +63,7 @@ class PluginProcessor  : public AudioProcessor,
                          public VSTCallbackHandler
 {
 public:
-
+    AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
     //AudioProcessorValueTreeState parameters;
     /* Get functions */
     void* getFXHandle() { return hPan; }
@@ -111,10 +111,10 @@ private:
     const double endFrequency = 20000.0;
     const double duration = 5.0;   // Duration in seconds
     double timeElapsed = 0.0;  // Keep track of how long the sweep has been playing
-    AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
     LoudspeakerStates currentSpeaker = NOT_CALIBRATING;
     bool isRecording = false;
     int currentRecordingPosition = 0;
+    int loudspeakerNumber = 1;
 
 
     void timerCallback(int timerID) override
@@ -146,7 +146,7 @@ public:
     double computeSweepFrequency(double time);
     void PluginProcessor::startCalibration();
     void PluginProcessor::endCalibration();
-    void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer, int channel);
+    void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer);
     void PluginProcessor::saveBufferToWav();
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
