@@ -27,10 +27,6 @@
 #include "outputCoordsView.h"
 #include "pannerView.h"
 #include "../../resources/SPARTALookAndFeel.h"
-#include "../VST2_SDK/public.sdk/source/vst2.x/audioeffect.h"
-#include "../VST2_SDK/public.sdk/source/vst2.x/audioeffectx.h"
-#include "../VST2_SDK/pluginterfaces/vst2.x/aeffect.h"
-#include "../VST2_SDK/pluginterfaces/vst2.x/aeffectx.h"
 
 
 

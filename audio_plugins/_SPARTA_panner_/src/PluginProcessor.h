@@ -49,12 +49,6 @@ enum {
     k_NumOfParameters
 };
 
-enum LoudspeakerStates {
-    NOT_CALIBRATING,
-    LOUDSPEAKER_ONE,
-    LOUDSPEAKER_TWO,
-    // Add more states if you have more loudspeakers
-};
 
 
 
@@ -111,10 +105,9 @@ private:
     const double endFrequency = 20000.0;
     const double duration = 5.0;   // Duration in seconds
     double timeElapsed = 0.0;  // Keep track of how long the sweep has been playing
-    LoudspeakerStates currentSpeaker = NOT_CALIBRATING;
     bool isRecording = false;
     int currentRecordingPosition = 0;
-    int loudspeakerNumber = 1;
+    int loudspeakerNumber = 0;
 
 
     void timerCallback(int timerID) override
