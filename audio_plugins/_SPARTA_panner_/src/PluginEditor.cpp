@@ -35,6 +35,9 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     //[Constructor_pre] You can add your own custom stuff here..
     //[/Constructor_pre]
 
+
+
+
     CBsourceDirsPreset.reset (new juce::ComboBox ("new combo box"));
     addAndMakeVisible (CBsourceDirsPreset.get());
     CBsourceDirsPreset->setEditableText (false);
@@ -97,6 +100,7 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     tb_calibration.reset (new juce::TextButton ("new button"));
     addAndMakeVisible (tb_calibration.get());
     tb_calibration->setButtonText (TRANS("Calibrate"));
+    tb_calibration->setConnectedEdges (juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight);
     tb_calibration->addListener (this);
     tb_calibration->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff3c393c));
 
@@ -728,6 +732,7 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
     {
         //[UserButtonCode_tb_calibration] -- add your button handler code here..
         //[/UserButtonCode_tb_calibration]
+        hVst->startCalibration();
     }
 
     //[UserbuttonClicked_Post]
@@ -940,7 +945,7 @@ BEGIN_JUCER_METADATA
               radioGroupId="0"/>
   <TEXTBUTTON name="new button" id="4288576c9eb666b4" memberName="tb_calibration"
               virtualName="" explicitFocusOrder="0" pos="448 328 104 32" bgColOff="ff3c393c"
-              buttonText="Calibrate" connectedEdges="0" needsCallback="1" radioGroupId="0"/>
+              buttonText="Calibrate" connectedEdges="3" needsCallback="1" radioGroupId="0"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA

@@ -22,19 +22,58 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
+{
+    AudioProcessorValueTreeState::ParameterLayout layout;
+
+    for (int i = 1; i < 9; ++i)
+        layout.add(std::make_unique<AudioParameterInt>(String(i), String(i), 0, i, 0));
+
+    return layout;
+}
+
 PluginProcessor::PluginProcessor() : 
 	AudioProcessor(BusesProperties()
 		.withInput("Input", AudioChannelSet::discreteChannels(64), true)
 	    .withOutput("Output", AudioChannelSet::discreteChannels(64), true))
 {
-	panner_create(&hPan);
+    AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
     refreshWindow = true;
+    panner_create(&hPan);
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
 PluginProcessor::~PluginProcessor()
 {
 	panner_destroy(&hPan);
+}
+
+void PluginProcessor::startCalibration() {
+    calibrating = true;
+    phase = 0.0;
+    timeElapsed = 0.0;
+    frequency = startFrequency;
+    isRecording = true;
+    currentRecordingPosition = 0;
+    loudspeakerNumber = 0;
+}
+
+void PluginProcessor::endCalibration() {
+    loudspeakerNumber++;
+    if (loudspeakerNumber >= panner_getNumLoudspeakers(hPan)) {
+        calibrating = 0;
+        isRecording = false;
+    }
+    else {
+        phase = 0.0;
+        timeElapsed = 0.0;
+        frequency = startFrequency;
+        currentRecordingPosition = 0;
+    }
+}
+
+double PluginProcessor::computeSweepFrequency(double time) {
+    return jmap(time, 0.0, duration * 5, startFrequency, endFrequency);        
 }
 
 void PluginProcessor::setParameter (int index, float newValue)
@@ -274,26 +313,97 @@ void PluginProcessor::releaseResources()
     isPlaying = false;
 }
 
-void PluginProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& /*midiMessages*/)
-{
-    int nCurrentBlockSize = nHostBlockSize = buffer.getNumSamples();
-    nNumInputs = jmin(getTotalNumInputChannels(), buffer.getNumChannels());
-    nNumOutputs = jmin(getTotalNumOutputChannels(), buffer.getNumChannels());
-    float** bufferData = buffer.getArrayOfWritePointers();
-    float* pFrameData[MAX_NUM_CHANNELS];
-    int frameSize = panner_getFrameSize();
+void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer) {
+    int numberOfInputs = panner_getNumSources(hPan);
+    const int numSamples = buffer.getNumSamples();
+    for (int sample = 0; sample < numSamples; ++sample) {
+        // Compute the instantaneous frequency for the sweep
+        frequency = computeSweepFrequency(timeElapsed);
 
-    if((nCurrentBlockSize % frameSize == 0)){ /* divisible by frame size */
-       for (int frame = 0; frame < nCurrentBlockSize/frameSize; frame++) {
-           for (int ch = 0; ch < buffer.getNumChannels(); ch++)
-               pFrameData[ch] = &bufferData[ch][frame*frameSize];
+        // Compute the sample of the sine sweep
+        float sineSample = std::sin(phase);
 
-           /* perform processing */
-           panner_process(hPan, pFrameData, pFrameData, nNumInputs, nNumOutputs, frameSize);
-       }
+        // Write this sample to all output channels (you can change this if needed)
+        buffer.setSample(loudspeakerNumber + numberOfInputs, sample, sineSample);
+
+        // Increment phase and wrap if it exceeds 2*PI
+        phase += (2.0 * double_Pi * frequency) * deltaT;
+        if (phase > 2.0 * double_Pi) {
+            phase -= 2.0 * double_Pi;
+        }
+
+        // Update time elapsed
+        timeElapsed += deltaT;
+
+        // Stop the sweep if the duration has been reached
+        if (timeElapsed >= duration) {
+            endCalibration();
+            break;
+        }
     }
-    else
-       buffer.clear();
+}
+
+void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages) {
+    // Get some important details
+    const int totalNumInputChannels = getTotalNumInputChannels();
+    const int totalNumOutputChannels = getTotalNumOutputChannels();
+    const int numSamples = buffer.getNumSamples();
+    const double sampleRate = getSampleRate();
+    const double deltaT = 1.0 / sampleRate;  // Time increment per sample
+    int numberOfInputs = panner_getNumSources(hPan);
+    recordingBuffer.setSize(numberOfInputs, 48000 * 5);
+
+    // Clear any unused channels
+    for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
+        buffer.clear(i, 0, numSamples);
+    }
+
+
+
+    if (calibrating) {
+        generateSine(deltaT, buffer);
+    }
+
+    if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
+        for (int channel = 0; channel < numberOfInputs; ++channel) {
+            recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+        }
+        currentRecordingPosition += buffer.getNumSamples();
+    }
+}
+
+void PluginProcessor::saveBufferToWav()
+{
+    // File path
+    juce::File outputFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("recorded_audio.wav");
+
+    // Create an AudioFormatManager and register the WAV format
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();  // This registers the WAV format among others
+
+    // Find the WAV format
+    juce::AudioFormat* wavFormat = formatManager.findFormatForFileExtension("wav");
+    if (wavFormat == nullptr)
+    {
+        // Error handling: WAV format not found
+        return;
+    }
+
+    // Create a writer for the specified file and format
+    std::unique_ptr<juce::AudioFormatWriter> writer(wavFormat->createWriterFor(
+        new juce::FileOutputStream(outputFile),
+        getSampleRate(),
+        recordingBuffer.getNumChannels(),
+        16,  // Bit depth, e.g., 16 bits
+        {},  // No metadata
+        0    // Use the default quality
+    ));
+
+    if (writer.get() != nullptr)
+    {
+        // Write the entire buffer to the file
+        writer->writeFromAudioSampleBuffer(recordingBuffer, 0, recordingBuffer.getNumSamples());
+    }
 }
 
 //==============================================================================

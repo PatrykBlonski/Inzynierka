@@ -28,6 +28,8 @@
 #include "pannerView.h"
 #include "../../resources/SPARTALookAndFeel.h"
 
+
+
 typedef enum _SPARTA_WARNINGS{
     k_warning_none,
     k_warning_frameSize,
