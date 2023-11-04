@@ -48,13 +48,13 @@ pannerView::pannerView (PluginProcessor* ownerFilter, int _width, int _height)
     hPan = hVst->getFXHandle();
     width = _width;
     height = _height;
-    for(int src=0; src<MAX_NUM_INPUTS; src++){
-        SourceIcons[src].setBounds(width - width*(panner_getSourceAzi_deg(hPan, src) + 180.0f)/360.f - icon_size/2.0f,
-                                   height - height*(panner_getSourceElev_deg(hPan, src) + 90.0f)/180.0f - icon_size/2.0f,
-                                   icon_size,
-                                   icon_size);
-    }
-    NSources = panner_getNumSources(hPan);
+    //for(int src=0; src<MAX_NUM_INPUTS; src++){
+    //    SourceIcons[src].setBounds(width - width*(panner_getSourceAzi_deg(hPan, src) + 180.0f)/360.f - icon_size/2.0f,
+    //                               height - height*(panner_getSourceElev_deg(hPan, src) + 90.0f)/180.0f - icon_size/2.0f,
+    //                               icon_size,
+    //                               icon_size);
+    //}
+    //NSources = panner_getNumSources(hPan);
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
     for(int ls=0; ls<NLoudspeakers; ls++){
         LoudspeakerIcons[ls].setBounds(width - width*(panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f)/360.f - icon_size/2.0f,
@@ -117,33 +117,47 @@ void pannerView::paint (juce::Graphics& g)
     g.drawLine(0.0f, height / 2.0f, width, height / 2.0f, 1.0f);
     g.drawLine(width / 2.0f, 0, width / 2.0f, height, 1.0f);
 
+    // We'll assume `width` is the total width of your component.
     for (int i = 0; i <= numGridLinesX; i++) {
         g.setOpacity(0.1f);
-        g.drawLine((float)i*width / (float)numGridLinesX, 0, (float)i*width / (float)numGridLinesX, height, 1.0f);
+        g.drawLine((float)i * width / (float)numGridLinesX, 0, (float)i * width / (float)numGridLinesX, height, 1.0f);
         g.setOpacity(0.75f);
-        if (i <= numGridLinesX / 2) {
-            g.drawText(String((int)(360 / 2 - i * (int)360 / numGridLinesX)) + "\xc2\xb0",
-                       (float)i*width / (float)numGridLinesX, height / 2, 40, 20, Justification::centred, true);
-        }
-        else {
-            g.drawText(String((int)(360 / 2 - i * (int)360 / numGridLinesX)) + "\xc2\xb0",
-                       (float)i*width / (float)numGridLinesX - 40, height / 2, 40, 20, Justification::centred, true);
-        }
+
+        // Now we adjust the drawText call to account for the new 0 to 360 range,
+        // and we offset the text appropriately if it's the last label to avoid being cut off
+        int angle = i * (int)360 / numGridLinesX;
+        float textX = (float)i * width / (float)numGridLinesX;
+        // Offset the last label (360 degrees) to the left to prevent cutting off
+        if (i == numGridLinesX) textX -= 40;
+
+        g.drawText(String(angle) + "\xc2\xb0", textX, height / 2, 40, 20, Justification::centred, true);
     }
 
+
+
+    // We'll assume `height` is the total height of your component.
     for (int i = 0; i <= numGridLinesY; i++) {
         g.setOpacity(0.1f);
-        g.drawLine(0, (float)i*height / (float)numGridLinesY, width, (float)i*height / (float)numGridLinesY, 1.0f);
+        g.drawLine(0, (float)i * height / (float)numGridLinesY, width, (float)i * height / (float)numGridLinesY, 1.0f);
         g.setOpacity(0.75f);
+
+        // Since we want the center to be 0 and range to -90 and +90, we adjust our formula
+        int angle;
+        float textY = (float)i * height / (float)numGridLinesY;
         if (i <= numGridLinesY / 2) {
-            g.drawText(String((int)(180 / 2 - i * (int)180 / numGridLinesY)) + "\xc2\xb0",
-                       width / 2.0f, (float)i*height / (float)numGridLinesY, 40, 20, Justification::centred, true);
+            // This is for the upper half (0 to 90)
+            angle = (numGridLinesY / 2 - i) * (int)180 / numGridLinesY;
         }
         else {
-            g.drawText(String((int)(180 / 2 - i * (int)180 / numGridLinesY)) + "\xc2\xb0",
-                       width / 2.0f, (float)i*height / (float)numGridLinesY - 20, 40, 20, Justification::centred, true);
+            // This is for the lower half (-90 to 0)
+            angle = (i - numGridLinesY / 2) * (int)180 / numGridLinesY;
+            textY -= 20; // Adjust text position for lower half
         }
+
+        g.drawText(String(angle) + "\xc2\xb0", width / 2.0f, textY, 40, 20, Justification::centred, true);
     }
+
+
 
     if(showOutputs){
         /* Draw loudspeaker icons */
@@ -155,25 +169,25 @@ void pannerView::paint (juce::Graphics& g)
         }
     }
 
-    if(showInputs){
-        /* Draw Source icons */
-        for(int src=0; src<NSources; src++){
-            /* icon */
-            //g.setColour(Colour::fromFloatRGBA(1.0-((float)src/(float)NSources), 0.3f, ((float)src/(float)NSources), 1.0f));
-            g.setColour(Colour::fromFloatRGBA(1.0f, 0.0f, 1.0f, 0.85f));
-            //setColourGradient(g, (float)src/(float)NSources);
-            g.setOpacity(0.2f);
-            g.fillEllipse(SourceIcons[src].expanded(8.0f,8.0f));
-            g.setOpacity(0.4f);
-            g.fillEllipse(SourceIcons[src].expanded(4.0f, 4.0f));
-            g.setOpacity(0.85f);
-            g.fillEllipse(SourceIcons[src]);
-            /* icon ID */
-            g.setColour(Colours::white);
-            g.setOpacity(0.9f);
-            g.drawText(String(src+1), SourceIcons[src].expanded(10.0f, 0.0f), Justification::centred, true); // .translated(icon_size, -icon_size)
-        }
-    }
+    //if(showInputs){
+    //    /* Draw Source icons */
+    //    for(int src=0; src<NSources; src++){
+    //        /* icon */
+    //        //g.setColour(Colour::fromFloatRGBA(1.0-((float)src/(float)NSources), 0.3f, ((float)src/(float)NSources), 1.0f));
+    //        g.setColour(Colour::fromFloatRGBA(1.0f, 0.0f, 1.0f, 0.85f));
+    //        //setColourGradient(g, (float)src/(float)NSources);
+    //        g.setOpacity(0.2f);
+    //        g.fillEllipse(SourceIcons[src].expanded(8.0f,8.0f));
+    //        g.setOpacity(0.4f);
+    //        g.fillEllipse(SourceIcons[src].expanded(4.0f, 4.0f));
+    //        g.setOpacity(0.85f);
+    //        g.fillEllipse(SourceIcons[src]);
+    //        /* icon ID */
+    //        g.setColour(Colours::white);
+    //        g.setOpacity(0.9f);
+    //        g.drawText(String(src+1), SourceIcons[src].expanded(10.0f, 0.0f), Justification::centred, true); // .translated(icon_size, -icon_size)
+    //    }
+    //}
     //[/UserPaint]
 }
 

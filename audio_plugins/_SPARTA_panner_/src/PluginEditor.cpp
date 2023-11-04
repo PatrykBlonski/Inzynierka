@@ -404,7 +404,7 @@ void PluginEditor::paint (juce::Graphics& g)
 
     {
         int x = 23, y = 88, width = 145, height = 30;
-        juce::String text (TRANS("Number of Inputs:"));
+        juce::String text (TRANS("Number of Inputs:")); //XXXX
         juce::Colour fillColour = juce::Colours::white;
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -498,17 +498,17 @@ void PluginEditor::paint (juce::Graphics& g)
                     juce::Justification::centredLeft, true);
     }
 
-    {
-        int x = 66, y = 122, width = 108, height = 28;
-        juce::String text (juce::CharPointer_UTF8 ("Azi\xc2\xb0   #   Elev\xc2\xb0"));
-        juce::Colour fillColour = juce::Colours::white;
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setColour (fillColour);
-        g.setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Bold"));
-        g.drawText (text, x, y, width, height,
-                    juce::Justification::centredLeft, true);
-    }
+    //{
+    //    int x = 66, y = 122, width = 108, height = 28;
+    //    juce::String text (juce::CharPointer_UTF8 ("Azi\xc2\xb0   #   Elev\xc2\xb0"));
+    //    juce::Colour fillColour = juce::Colours::white;
+    //    //[UserPaintCustomArguments] Customize the painting arguments here..
+    //    //[/UserPaintCustomArguments]
+    //    g.setColour (fillColour);
+    //    g.setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Bold"));
+    //    g.drawText (text, x, y, width, height,
+    //                juce::Justification::centredLeft, true);
+    //}
 
     {
         int x = 767, y = 122, width = 108, height = 28;
