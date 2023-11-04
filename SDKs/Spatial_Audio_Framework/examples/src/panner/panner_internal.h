@@ -137,7 +137,18 @@ typedef struct _panner
     
 } panner_data;
      
+typedef struct _beam {
+    float theta;
+    float phi;
+    float sinTheta;
+    float cosTheta;
+    float sinPhi;
+    float cosPhi;
+} Direction;
 
+#define PI 3.14159265358979323846f
+#define THETA_STEPS 2
+#define PHI_STEPS 1
 /* ========================================================================== */
 /*                             Internal Functions                             */
 /* ========================================================================== */

@@ -89,6 +89,7 @@ public:
     
 private:
     void* hPan;           /* panner handle */
+    void* bhPan;          /* beamform panner handle */
     int nNumInputs;       /* current number of input channels */
     int nNumOutputs;      /* current number of output channels */
     int nSampleRate;      /* current host sample rate */

@@ -45,9 +45,33 @@
 
 void panner_create
 (
-    void ** const phPan
+    void ** const phPan,
+    void ** const bhPan
 )
 {
+    Direction* bData = (Direction*)malloc1d(THETA_STEPS * PHI_STEPS * sizeof(Direction));
+    *bhPan = (void*)bData;
+
+    float thetas[THETA_STEPS * PHI_STEPS];
+    float phis[THETA_STEPS * PHI_STEPS];
+
+    for (int ti = 0; ti < THETA_STEPS; ti++) {
+        for (int pi = 0; pi < PHI_STEPS; pi++) {
+            int index = ti * PHI_STEPS + pi;
+            bData[index].theta = (float)ti * 2.0f * PI / THETA_STEPS;
+            bData[index].phi = (float)pi * PI / PHI_STEPS;
+            thetas[index] = bData[index].theta;
+            phis[index] = bData[index].phi;
+        }
+    }
+
+    // Compute sin and cos using IPP
+    ippsSin_32f_A24(thetas, &bData[0].sinTheta, THETA_STEPS * PHI_STEPS);
+    ippsCos_32f_A24(thetas, &bData[0].cosTheta, THETA_STEPS * PHI_STEPS);
+    ippsSin_32f_A24(phis, &bData[0].sinPhi, THETA_STEPS * PHI_STEPS);
+    ippsCos_32f_A24(phis, &bData[0].cosPhi, THETA_STEPS * PHI_STEPS);
+
+
     panner_data* pData = (panner_data*)malloc1d(sizeof(panner_data));
     *phPan = (void*)pData;
     int ch, dummy;
@@ -88,10 +112,12 @@ void panner_create
 
 void panner_destroy
 (
-    void ** const phPan
+    void ** const phPan,
+    void ** const bhPan
 )
 {
-    panner_data *pData = (panner_data*)(*phPan);
+    panner_data* pData = (panner_data*)(*phPan);
+    Direction *bData = (Direction*)(*bhPan);
 
     if (pData != NULL) {
         /* not safe to free memory during intialisation/processing loop */
@@ -112,6 +138,8 @@ void panner_destroy
         
         free(pData);
         pData = NULL;
+
+        free(bData);
     }
 }
 
@@ -168,6 +196,47 @@ void panner_initCodec
     pData->progressBar0_1 = 1.0f;
     pData->codecStatus = CODEC_STATUS_INITIALISED;
     
+}
+
+float panner_beamform(float X[], float Y[], float Z[], Direction * bData, int num_samples) {
+    float energy = 0.0f;
+    for (int i = 0; i < num_samples; i++) {
+        float ux = bData->sinPhi * bData->cosTheta;
+        float uy = bData->sinPhi * bData->sinTheta;
+        float uz = bData->cosPhi;
+
+        float sample_energy = ux * X[i] + uy * Y[i] + uz * Z[i];
+        energy += sample_energy * sample_energy; // Assuming energy is sum of squared sample energies
+    }
+    return energy;
+}
+
+float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples, void * const bPan)
+{
+    Direction* bData = (Direction*)(bPan);
+    float maxEnergy = -1e9f;
+    float bestTheta = 0.0f, bestPhi = 0.0f;
+
+#pragma omp parallel for reduction(max:maxEnergy)
+    for (int i = 0; i < THETA_STEPS * PHI_STEPS; i++) {
+        float energy = panner_beamform(X, Y, Z, &bData[i], numSamples);
+        if (energy > maxEnergy) {
+#pragma omp critical
+            {
+                if (energy > maxEnergy) {
+                    maxEnergy = energy;
+                    bestTheta = bData[i].theta;
+                    bestPhi = bData[i].phi;
+                }
+            }
+        }
+    }
+
+    printf("Best direction:\n");
+    printf("Azimuth (theta) = %f degrees\n", bestTheta * 180.0f / PI);
+    printf("Elevation (phi) = %f degrees\n", bestPhi * 180.0f / PI);
+
+    return bestTheta, bestPhi;
 }
 
 void panner_process

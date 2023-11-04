@@ -80,14 +80,14 @@ extern "C" {
  *
  * @param[in] phPan (&) address of panner handle
  */
-void panner_create(void** const phPan);
+void panner_create(void** const phPan, void** const bhPan);
 
 /**
  * Destroys an instance of the panner
  *
  * @param[in] phPan (&) address of panner handle
  */
-void panner_destroy(void** const phPan);
+void panner_destroy(void** const phPan, void** const bhPan);
 
 /**
  * Initialises an instance of panner with default settings
@@ -116,7 +116,8 @@ void panner_init(void* const hPan,
  * @param[in] hPan panner handle
  */
 void panner_initCodec(void* const hPan);
-
+float panner_beamform(float X[], float Y[], float Z[], void* const bPan, int num_samples);
+float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples, void* const bPan);
 /**
  * Pans the input signals/sources to the loudspeaker channels using VBAP [1],
  * and optional spreading [2] and frequency-dependent normalisation as a

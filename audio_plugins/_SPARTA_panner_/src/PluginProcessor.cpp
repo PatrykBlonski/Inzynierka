@@ -39,13 +39,13 @@ PluginProcessor::PluginProcessor() :
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
     refreshWindow = true;
-    panner_create(&hPan);
+    panner_create(&hPan, &bhPan);
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
 PluginProcessor::~PluginProcessor()
 {
-	panner_destroy(&hPan);
+	panner_destroy(&hPan, &bhPan);
 }
 
 void PluginProcessor::startCalibration() {
@@ -351,7 +351,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     const double sampleRate = getSampleRate();
     const double deltaT = 1.0 / sampleRate;  // Time increment per sample
     int numberOfInputs = panner_getNumSources(hPan);
-    recordingBuffer.setSize(numberOfInputs, 48000 * 5);
+    recordingBuffer.setSize(numberOfInputs, sampleRate * 5);
 
     // Clear any unused channels
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {

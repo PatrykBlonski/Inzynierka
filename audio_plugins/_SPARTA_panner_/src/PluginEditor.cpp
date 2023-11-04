@@ -35,9 +35,6 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     //[Constructor_pre] You can add your own custom stuff here..
     //[/Constructor_pre]
 
-
-
-
     CBsourceDirsPreset.reset (new juce::ComboBox ("new combo box"));
     addAndMakeVisible (CBsourceDirsPreset.get());
     CBsourceDirsPreset->setEditableText (false);
@@ -732,7 +729,6 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
     {
         //[UserButtonCode_tb_calibration] -- add your button handler code here..
         //[/UserButtonCode_tb_calibration]
-        hVst->startCalibration();
     }
 
     //[UserbuttonClicked_Post]
