@@ -40,7 +40,7 @@ pannerView::pannerView (PluginProcessor* ownerFilter, int _width, int _height)
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (480, 240);
+    setSize (460, 460);
 
 
     //[Constructor] You can add your own custom stuff here..
@@ -87,7 +87,7 @@ void pannerView::paint (juce::Graphics& g)
     //[/UserPrePaint]
 
     {
-        int x = 0, y = 0, width = 480, height = 240;
+        int x = 0, y = 0, width = 480, height = 460;
         juce::Colour fillColour1 = juce::Colour (0xff4e4e4e), fillColour2 = juce::Colour (0xff202020);
         juce::Colour strokeColour = juce::Colour (0xff9e9e9e);
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -109,52 +109,48 @@ void pannerView::paint (juce::Graphics& g)
 
 
     /* Draw Grid lines and labels */
-    int numGridLinesX = 8;
-    int numGridLinesY = numGridLinesX / 2;
+    int numGridLinesX = 22;
+    int numGridLinesY = 22;
     g.setColour(Colours::white);
     g.setOpacity(0.75f);
 
     g.drawLine(0.0f, height / 2.0f, width, height / 2.0f, 1.0f);
     g.drawLine(width / 2.0f, 0, width / 2.0f, height, 1.0f);
 
-    // We'll assume `width` is the total width of your component.
     for (int i = 0; i <= numGridLinesX; i++) {
-        g.setOpacity(0.1f);
-        g.drawLine((float)i * width / (float)numGridLinesX, 0, (float)i * width / (float)numGridLinesX, height, 1.0f);
-        g.setOpacity(0.75f);
-
-        // Now we adjust the drawText call to account for the new 0 to 360 range,
-        // and we offset the text appropriately if it's the last label to avoid being cut off
-        int angle = i * (int)360 / numGridLinesX;
-        float textX = (float)i * width / (float)numGridLinesX;
-        // Offset the last label (360 degrees) to the left to prevent cutting off
-        if (i == numGridLinesX) textX -= 40;
-
-        g.drawText(String(angle) + "\xc2\xb0", textX, height / 2, 40, 20, Justification::centred, true);
+    g.setOpacity(0.1f);
+    g.drawLine((float)i * width / (float)numGridLinesX, 0, (float)i * width / (float)numGridLinesX, height, 1.0f);
+    g.setOpacity(0.75f);
+    if (i >= (numGridLinesX - 2) / 2) {
+        if ((-20 / 2 + i * (int)20 / (numGridLinesX - 2)) % 2 == 0 || (-20 / 2 + i * (int)20 / (numGridLinesX - 2)) == 0) {
+            g.drawText(String((int)(-20 / 2 + i * (int)20 / (numGridLinesX - 2))),
+                (float)(i + 2) * width / (float)numGridLinesX - 40, height / 2, 40, 20, Justification::centred, true);
+        }
+    }
+    else if(i < (numGridLinesX - 2) / 2){
+        if ((-20 / 2 + i * (int)20 / (numGridLinesX - 2)) % 2 == 0) {
+            g.drawText(String((int)(-20 / 2 + i * (int)20 / (numGridLinesX - 2))),
+                (float)i * width / (float)numGridLinesX, height / 2, 40, 20, Justification::centred, true);
+        }
+    }
     }
 
-
-
-    // We'll assume `height` is the total height of your component.
     for (int i = 0; i <= numGridLinesY; i++) {
         g.setOpacity(0.1f);
         g.drawLine(0, (float)i * height / (float)numGridLinesY, width, (float)i * height / (float)numGridLinesY, 1.0f);
         g.setOpacity(0.75f);
-
-        // Since we want the center to be 0 and range to -90 and +90, we adjust our formula
-        int angle;
-        float textY = (float)i * height / (float)numGridLinesY;
-        if (i <= numGridLinesY / 2) {
-            // This is for the upper half (0 to 90)
-            angle = (numGridLinesY / 2 - i) * (int)180 / numGridLinesY;
+        if (i < (numGridLinesY - 2) / 2) {
+            if ((20 / 2 - i * (int)20 / (numGridLinesY - 2)) % 2 == 0) {
+                g.drawText(String((int)(20 / 2 - i * (int)20 / (numGridLinesY - 2))),
+                    width / 2.0f, (float)i * height / (float)numGridLinesY + 8, 40, 20, Justification::centred, true);
+            }
         }
-        else {
-            // This is for the lower half (-90 to 0)
-            angle = (i - numGridLinesY / 2) * (int)180 / numGridLinesY;
-            textY -= 20; // Adjust text position for lower half
+        else if(i > (numGridLinesY - 2) / 2) {
+            if ((20 / 2 - i * (int)20 / (numGridLinesY - 2)) % 2 == 0) {
+                g.drawText(String((int)(20 / 2 - i * (int)20 / (numGridLinesY - 2))),
+                    width / 2.0f, (float)(i + 2) * height / (float)numGridLinesY - 20 - 9, 40, 20, Justification::centred, true);
+            }
         }
-
-        g.drawText(String(angle) + "\xc2\xb0", width / 2.0f, textY, 40, 20, Justification::centred, true);
     }
 
 
@@ -276,7 +272,7 @@ BEGIN_JUCER_METADATA
 <JUCER_COMPONENT documentType="Component" className="pannerView" componentName=""
                  parentClasses="public Component" constructorParams="PluginProcessor* ownerFilter, int _width, int _height"
                  variableInitialisers="" snapPixels="8" snapActive="1" snapShown="1"
-                 overlayOpacity="0.330" fixedSize="1" initialWidth="480" initialHeight="240">
+                 overlayOpacity="0.330" fixedSize="1" initialWidth="460" initialHeight="460">
   <METHODS>
     <METHOD name="mouseDown (const MouseEvent&amp; e)"/>
     <METHOD name="mouseDrag (const MouseEvent&amp; e)"/>
