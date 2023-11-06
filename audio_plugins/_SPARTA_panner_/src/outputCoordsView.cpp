@@ -35,14 +35,14 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
     //[Constructor_pre] You can add your own custom stuff here..
     //[/Constructor_pre]
 
-    dummySlider.reset (new juce::Slider ("new slider"));
-    addAndMakeVisible (dummySlider.get());
-    dummySlider->setRange (0.01, 0.3, 0.001);
-    dummySlider->setSliderStyle (juce::Slider::LinearHorizontal);
-    dummySlider->setTextBoxStyle (juce::Slider::TextBoxRight, false, 70, 20);
-    dummySlider->addListener (this);
+    dummyLabel.reset (new juce::Label ("new label"));
+    addAndMakeVisible (dummyLabel.get());
+   // dummylabel->setRange (0.01, 0.3, 0.001);
+  //  dummylabel->setlabelStyle (juce::label::LinearHorizontal);
+   // dummylabel->setTextBoxStyle (juce::label::TextBoxRight, false, 70, 20);
+  //  dummyLabel->addListener (this);
 
-    dummySlider->setBounds (-176, 144, 96, 16);
+    dummyLabel->setBounds (-176, 144, 96, 16);
 
 
     //[UserPreSize]
@@ -57,44 +57,48 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
     hPan = hVst->getFXHandle();
     maxNCH = _maxNCH ;
     currentNCH =_currentNCH;
-    aziSliders =  new std::unique_ptr<Slider>[(unsigned long)maxNCH];
-    elevSliders = new std::unique_ptr<Slider>[(unsigned long)maxNCH];
-    distSliders =  new std::unique_ptr<Slider>[(unsigned long)maxNCH];
+    aziLabels =  new std::unique_ptr<Label>[(unsigned long)maxNCH];
+    elevLabels = new std::unique_ptr<Label>[(unsigned long)maxNCH];
+    distLabels =  new std::unique_ptr<Label>[(unsigned long)maxNCH];
 
     for( int i=0; i<maxNCH; i++){
-        /* create and initialise azimuth sliders */
-        distSliders[i].reset(new Slider("new slider"));
-        addAndMakeVisible(distSliders[i].get());
-        distSliders[i]->setRange(0, 10.0, 0.1);
-        distSliders[i]->setValue(panner_getLoudspeakerAzi_deg(hPan, i));
-        distSliders[i]->setSliderStyle(Slider::LinearHorizontal);
-        distSliders[i]->setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
-        distSliders[i]->setBounds(-25, 8 + i * sensorEdit_height, 86, 16);
-        distSliders[i]->addListener(this);
+        /* create and initialise azimuth labels */
+        distLabels[i].reset(new Label("new label"));
+        addAndMakeVisible(distLabels[i].get());
+     //   distLabels[i]->setRange(0, 10.0, 0.1);
+     //   distLabels[i]->setValue(panner_getLoudspeakerAzi_deg(hPan, i));
+      //  distLabels[i]->setlabelStyle(label::LinearHorizontal);
+      //  distLabels[i]->setTextBoxStyle(label::TextBoxRight, true, 70, 20);
+        distLabels[i]->setText(String(panner_getLoudspeakerAzi_deg(hPan, i)), dontSendNotification);
+        distLabels[i]->setBounds(45, 8 + i * sensorEdit_height, 86, 16);
+     //   distLabels[i]->addListener(this);
 
-        /* create and initialise azimuth sliders */
-        aziSliders[i].reset (new Slider ("new slider"));
-        addAndMakeVisible (aziSliders[i].get());
-        aziSliders[i]->setRange (0, 360.0, 0.1);
-        aziSliders[i]->setValue(panner_getLoudspeakerAzi_deg(hPan, i));
-      //  aziSliders[i]->setTextBoxStyle(Slider::TextBoxBelow, true, 70, 20);
-        aziSliders[i]->setSliderStyle (Slider::LinearHorizontal);
-        aziSliders[i]->setTextBoxStyle (Slider::TextBoxRight, true, 70, 20);
-        aziSliders[i]->setBounds(50, 8 + i*sensorEdit_height, 86, 16);
-        aziSliders[i]->addListener (this);
+        /* create and initialise azimuth labels */
+        aziLabels[i].reset (new Label ("new label"));
+        addAndMakeVisible (aziLabels[i].get());
+      //  azilabels[i]->setRange (0, 360.0, 0.1);
+      //  azilabels[i]->setValue(panner_getLoudspeakerAzi_deg(hPan, i));
+      ////  azilabels[i]->setTextBoxStyle(label::TextBoxBelow, true, 70, 20);
+      //  azilabels[i]->setlabelStyle (label::LinearHorizontal);
+      //  azilabels[i]->setTextBoxStyle (label::TextBoxRight, true, 70, 20);
+        aziLabels[i]->setText(String(panner_getLoudspeakerAzi_deg(hPan, i)), dontSendNotification);
+        aziLabels[i]->setBounds(95, 8 + i*sensorEdit_height, 86, 16);
+   //     aziLabels[i]->addListener (this);
+        
+        /* create and initialise elevation labels */
+        elevLabels[i].reset (new Label ("new label"));
+        addAndMakeVisible (elevLabels[i].get());
+       /* elevlabels[i]->setRange (-90.0, 90.0, 0.1);
+        elevlabels[i]->setValue(panner_getLoudspeakerElev_deg(hPan, i));
+        elevlabels[i]->setlabelStyle (label::LinearHorizontal);
+        elevlabels[i]->setTextBoxStyle (label::TextBoxLeft, true, 70, 20);*/
+        elevLabels[i]->setText(String(panner_getLoudspeakerElev_deg(hPan, i)), dontSendNotification);
+        elevLabels[i]->setBounds(150, 8 + i*sensorEdit_height, 86, 16);
 
-        /* create and initialise elevation sliders */
-        elevSliders[i].reset (new Slider ("new slider"));
-        addAndMakeVisible (elevSliders[i].get());
-        elevSliders[i]->setRange (-90.0, 90.0, 0.1);
-        elevSliders[i]->setValue(panner_getLoudspeakerElev_deg(hPan, i));
-        elevSliders[i]->setSliderStyle (Slider::LinearHorizontal);
-        elevSliders[i]->setTextBoxStyle (Slider::TextBoxLeft, false, 70, 20);
-        elevSliders[i]->setBounds(155, 8 + i*sensorEdit_height, 86, 16);
-        elevSliders[i]->addListener (this);
+    //    elevLabels[i]->addListener (this);
     }
 
-    sliderHasChanged = true;
+    labelHasChanged = true;
 
 	refreshCoords();
 	resized();
@@ -107,18 +111,18 @@ outputCoordsView::~outputCoordsView()
     //[Destructor_pre]. You can add your own custom destruction code here..
     //[/Destructor_pre]
 
-    dummySlider = nullptr;
+  //  dummylabel = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
     for( int i=0; i<maxNCH; i++){
-        aziSliders[i] = nullptr;
-        elevSliders[i] = nullptr;
-        distSliders[i] = nullptr;
+        aziLabels[i] = nullptr;
+        elevLabels[i] = nullptr;
+        distLabels[i] = nullptr;
     }
-    delete [] aziSliders;
-    delete[] elevSliders;
-    delete [] distSliders;
+    delete [] aziLabels;
+    delete[] elevLabels;
+    delete [] distLabels;
     //[/Destructor]
 }
 
@@ -127,6 +131,21 @@ void outputCoordsView::paint (juce::Graphics& g)
 {
     //[UserPrePaint] Add your own custom painting code here..
     //[/UserPrePaint]
+
+    {
+        int x = 176, y = 0, width = 88, height = 2048;
+        juce::Colour fillColour1 = juce::Colour(0x21ffffff), fillColour2 = juce::Colour(0x05252a25);
+        //[UserPaintCustomArguments] Customize the painting arguments here..
+        //[/UserPaintCustomArguments]
+        g.setGradientFill(juce::ColourGradient(fillColour1,
+            88.0f - 0.0f + x,
+            128.0f - 0.0f + y,
+            fillColour2,
+            0.0f - 0.0f + x,
+            128.0f - 0.0f + y,
+            false));
+        g.fillRect(x, y, width, height);
+    }
 
     {
         int x = 88, y = 0, width = 88, height = 2048;
@@ -158,20 +177,7 @@ void outputCoordsView::paint (juce::Graphics& g)
         g.fillRect (x, y, width, height);
     }
 
-    {
-        int x = 172, y = 0, width = 88, height = 2048;
-        juce::Colour fillColour1 = juce::Colour(0x21ffffff), fillColour2 = juce::Colour(0x05252a25);
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setGradientFill(juce::ColourGradient(fillColour1,
-            88.0f - 0.0f + x,
-            128.0f - 0.0f + y,
-            fillColour2,
-            0.0f - 0.0f + x,
-            128.0f - 0.0f + y,
-            false));
-        g.fillRect(x, y, width, height);
-    }
+   
 
     //[UserPaint] Add your own custom painting code here..
     Colour fillColour = Colours::white;
@@ -181,7 +187,7 @@ void outputCoordsView::paint (juce::Graphics& g)
     for( int i=0; i<maxNCH; i++){
         /* draw sensor IDs */
         g.setColour (fillColour);
-        g.drawText (String(i+1), -30, 5+ i*sensorEdit_height, 33, 23,
+        g.drawText (String(i+1), -5, 5+ i*sensorEdit_height, 33, 23,
                     Justification::centred, true);
 
         /* draw rectangle around sensor parameter */
@@ -189,9 +195,7 @@ void outputCoordsView::paint (juce::Graphics& g)
         //g.setColour (strokeColour);
         g.setColour(Colours::white);
         g.setOpacity(0.15f);
-        g.drawRect(0, i * sensorEdit_height, sensorEdit_width/3, sensorEdit_height + 1, 1);
-        g.drawRect(sensorEdit_width/3, i * sensorEdit_height, sensorEdit_width/3, sensorEdit_height + 1, 1);
-        g.drawRect (sensorEdit_width/3*2, i*sensorEdit_height, sensorEdit_width/3, sensorEdit_height+1, 1);
+        g.drawRect(0, i * sensorEdit_height, sensorEdit_width, sensorEdit_height + 1, 1);
     }
 
 
@@ -209,34 +213,41 @@ void outputCoordsView::resized()
     //[/UserResized]
 }
 
-void outputCoordsView::sliderValueChanged (juce::Slider* sliderThatWasMoved)
-{
-    //[UsersliderValueChanged_Pre]
-    //[/UsersliderValueChanged_Pre]
-
-    if (sliderThatWasMoved == dummySlider.get())
-    {
-        //[UserSliderCode_dummySlider] -- add your slider handling code here..
-        //[/UserSliderCode_dummySlider]
-    }
-
-    //[UsersliderValueChanged_Post]
-    //[/UsersliderValueChanged_Post]
-}
+//void outputCoordsView::labelValueChanged (juce::Label* labelThatWasMoved)
+//{
+//    //[UserlabelValueChanged_Pre]
+//    //[/UserlabelValueChanged_Pre]
+//
+//    if (labelThatWasMoved == dummyLabel.get())
+//    {
+//        //[UserlabelCode_dummylabel] -- add your label handling code here..
+//        //[/UserlabelCode_dummylabel]
+//    }
+//
+//    //[UserlabelValueChanged_Post]
+//    //[/UserlabelValueChanged_Post]
+//}
 
 
 
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 
 void outputCoordsView::refreshCoords(){
-    /* update slider values and limits */
+    /* update label values and limits */
     for( int i=0; i<maxNCH; i++){
-        aziSliders[i]->setRange (-360.0, 360.0, 0.1);
-        aziSliders[i]->setValue(panner_getLoudspeakerAzi_deg(hPan, i), dontSendNotification);
-        elevSliders[i]->setRange (-180.0, 180.0, 0.1);
-        elevSliders[i]->setValue(panner_getLoudspeakerElev_deg(hPan, i), dontSendNotification);
-        distSliders[i]->setRange(0.0, 10.0, 0.1);
-        distSliders[i]->setValue(5, dontSendNotification);
+       // aziLabels[i]->setRange (-360.0, 360.0, 0.1);
+        
+        distLabels[i]->setText(String(5), dontSendNotification);
+        distLabels[i]->setBounds(distLabels[i]->getText().contains("-") ? 40 : 45, 8 + i * sensorEdit_height, 86, 16);
+
+      //  elevLabels[i]->setRange (-180.0, 180.0, 0.1);
+        aziLabels[i]->setText(String(panner_getLoudspeakerAzi_deg(hPan, i)), dontSendNotification);
+        aziLabels[i]->setBounds(aziLabels[i]->getText().contains("-") ? 90 : 95, 8 + i * sensorEdit_height, 86, 16);
+
+      //  distLabels[i]->setRange(0.0, 10.0, 0.1);
+        elevLabels[i]->setText(String(panner_getLoudspeakerElev_deg(hPan, i)), dontSendNotification);
+        elevLabels[i]->setBounds(elevLabels[i]->getText().contains("-") ? 145 : 150, 8 + i * sensorEdit_height, 86, 16);
+
     }
 }
 
@@ -263,7 +274,7 @@ BEGIN_JUCER_METADATA
     <RECT pos="0 0 88 2048" fill="linear: 88 128, 0 128, 0=21ffffff, 1=5252a25"
           hasStroke="0"/>
   </BACKGROUND>
-  <SLIDER name="new slider" id="4689db34530ab7c7" memberName="dummySlider"
+  <label name="new label" id="4689db34530ab7c7" memberName="dummylabel"
           virtualName="" explicitFocusOrder="0" pos="-176 144 96 16" min="0.01"
           max="0.3" int="0.001" style="LinearHorizontal" textBoxPos="TextBoxRight"
           textBoxEditable="1" textBoxWidth="70" textBoxHeight="20" skewFactor="1.0"

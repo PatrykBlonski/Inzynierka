@@ -449,8 +449,8 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 733, y = 123, width = 155, height = 28;
-        juce::String text (juce::CharPointer_UTF8 ("#  Dist    Azi\xc2\xb0   Elev\xc2\xb0"));
+        int x = 713, y = 123, width = 165, height = 28;
+        juce::String text (juce::CharPointer_UTF8 ("#    Dist      Azi\xc2\xb0     Elev\xc2\xb0"));
         juce::Colour fillColour = juce::Colours::white;
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -716,10 +716,10 @@ void PluginEditor::timerCallback(int timerID)
 
             /* refresh pan view */
             if((refreshPanViewWindow == true) || (panWindow->getSourceIconIsClicked()) ||
-                loudspeakerCoordsView_handle->getHasASliderChanged() || hVst->getRefreshWindow()){
+                loudspeakerCoordsView_handle->getHasALabelChanged() || hVst->getRefreshWindow()){
                 panWindow->refreshPanView();
                 refreshPanViewWindow = false;
-                loudspeakerCoordsView_handle->setHasASliderChange(false);
+                loudspeakerCoordsView_handle->setHasALabelChange(false);
                 hVst->setRefreshWindow(false);
             }
 

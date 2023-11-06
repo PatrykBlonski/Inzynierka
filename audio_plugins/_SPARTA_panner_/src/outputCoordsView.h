@@ -36,8 +36,8 @@
     Describe your class and how it works here!
                                                                     //[/Comments]
 */
-class outputCoordsView  : public Component,
-                          public juce::Slider::Listener
+class outputCoordsView  : public Component
+                          
 {
 public:
     //==============================================================================
@@ -52,17 +52,17 @@ public:
 		if (newNCH != currentNCH) {
 			currentNCH = newNCH;
 			resized();
-			sliderHasChanged = true;
+			labelHasChanged = true;
 		}
     }
-    bool getHasASliderChanged(){ return sliderHasChanged; }
-    void setHasASliderChange(bool newState){ sliderHasChanged = newState; }
+    bool getHasALabelChanged(){ return labelHasChanged; }
+    void setHasALabelChange(bool newState){ labelHasChanged = newState; }
 
     //[/UserMethods]
 
     void paint (juce::Graphics& g) override;
     void resized() override;
-    void sliderValueChanged (juce::Slider* sliderThatWasMoved) override;
+  //  void labelValueChanged (juce::Label* labelThatWasMoved);
 
 
 
@@ -71,15 +71,15 @@ private:
     PluginProcessor* hVst;
     void *hPan;
     void refreshCoords();
-    std::unique_ptr<Slider>* aziSliders;
-    std::unique_ptr<Slider>* elevSliders;
-    std::unique_ptr<Slider>* distSliders;
+    std::unique_ptr<Label>* aziLabels;
+    std::unique_ptr<Label>* elevLabels;
+    std::unique_ptr<Label>* distLabels;
     int maxNCH, currentNCH;
-    bool sliderHasChanged;
+    bool labelHasChanged;
     //[/UserVariables]
 
     //==============================================================================
-    std::unique_ptr<juce::Slider> dummySlider;
+    std::unique_ptr<juce::Label> dummyLabel;
 
 
     //==============================================================================
