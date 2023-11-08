@@ -54,19 +54,12 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
 
     SL_num_sources->setBounds (152, 94, 48, 20);
 
-    TB_showInputs.reset (new juce::ToggleButton ("new toggle button"));
-    addAndMakeVisible (TB_showInputs.get());
-    TB_showInputs->setButtonText (juce::String());
-    TB_showInputs->addListener (this);
-
-    TB_showInputs->setBounds (672, 317, 24, 24);
-
     TB_showOutputs.reset (new juce::ToggleButton ("new toggle button"));
     addAndMakeVisible (TB_showOutputs.get());
     TB_showOutputs->setButtonText (juce::String());
     TB_showOutputs->addListener (this);
 
-    TB_showOutputs->setBounds (672, 349, 24, 24);
+    TB_showOutputs->setBounds (152, 136, 24, 24);
 
     SL_num_loudspeakers.reset (new juce::Slider ("new slider"));
     addAndMakeVisible (SL_num_loudspeakers.get());
@@ -101,13 +94,13 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     tb_calibration->addListener (this);
     tb_calibration->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff3c393c));
 
-    tb_calibration->setBounds (448, 328, 104, 32);
+    tb_calibration->setBounds (56, 168, 104, 32);
 
 
     //[UserPreSize]
     //[/UserPreSize]
 
-    setSize (920, 386);
+    setSize (940, 556);
 
 
     //[Constructor] You can add your own custom stuff here..
@@ -173,16 +166,6 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     progressbar.setColour(ProgressBar::backgroundColourId, Colours::gold);
     progressbar.setColour(ProgressBar::foregroundColourId, Colours::white);
 
-    /* source coordinates viewport */
-    sourceCoordsVP.reset (new Viewport ("new viewport"));
-    addAndMakeVisible (sourceCoordsVP.get());
-    sourceCoordsView_handle = new inputCoordsView(ownerFilter, MAX_NUM_INPUTS, panner_getNumSources(hPan));
-    sourceCoordsVP->setViewedComponent (sourceCoordsView_handle);
-    sourceCoordsVP->setScrollBarsShown (true, false);
-    sourceCoordsVP->setAlwaysOnTop(true);
-    sourceCoordsVP->setBounds(22, 153, 184, 210);
-    sourceCoordsView_handle->setNCH(panner_getNumSources(hPan));
-
     /* loudspeaker coordinates viewport */
     loudspeakerCoordsVP.reset (new Viewport ("new viewport"));
     addAndMakeVisible (loudspeakerCoordsVP.get());
@@ -190,25 +173,22 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     loudspeakerCoordsVP->setViewedComponent (loudspeakerCoordsView_handle);
     loudspeakerCoordsVP->setScrollBarsShown (true, false);
     loudspeakerCoordsVP->setAlwaysOnTop(true);
-    loudspeakerCoordsVP->setBounds(722, 153, 184, 210);
+    loudspeakerCoordsVP->setBounds(702, 153, 292, 210);
     loudspeakerCoordsView_handle->setNCH(panner_getNumLoudspeakers(hPan));
 
     /* grab current parameter settings */
     SL_num_sources->setValue(panner_getNumSources(hPan),dontSendNotification);
-    TB_showInputs->setToggleState(true, dontSendNotification);
     TB_showOutputs->setToggleState(true, dontSendNotification);
 
     /* create panning window */
-    panWindow.reset (new pannerView(ownerFilter, 480, 240));
+    panWindow.reset (new pannerView(ownerFilter, 460, 460));
     addAndMakeVisible (panWindow.get());
-    panWindow->setBounds (220, 58, 480, 240);
-    panWindow->setShowInputs(TB_showInputs->getToggleState());
+    panWindow->setBounds (220, 58, 460, 460);
     panWindow->setShowOutputs(TB_showOutputs->getToggleState());
     refreshPanViewWindow = true;
 
     /* tooltips */
     CBsourceDirsPreset->setTooltip("Presets for source directions to use for spatialisation.");
-    TB_showInputs->setTooltip("Enables/Disables displaying the source directions in the panning window.");
     TB_showOutputs->setTooltip("Enables/Disables displaying the loudspeaker directions in the panning window.");
     tb_loadJSON_src->setTooltip("Loads source directions from a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
     tb_saveJSON_ls->setTooltip("Saves the current loudspeaker directions to a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
@@ -237,7 +217,6 @@ PluginEditor::~PluginEditor()
 
     CBsourceDirsPreset = nullptr;
     SL_num_sources = nullptr;
-    TB_showInputs = nullptr;
     TB_showOutputs = nullptr;
     SL_num_loudspeakers = nullptr;
     tb_loadJSON_src = nullptr;
@@ -247,7 +226,6 @@ PluginEditor::~PluginEditor()
 
     //[Destructor]. You can add your own custom destruction code here..
     setLookAndFeel(nullptr);
-    sourceCoordsVP = nullptr;
     loudspeakerCoordsVP = nullptr;
     panWindow = nullptr;
     //[/Destructor]
@@ -262,7 +240,7 @@ void PluginEditor::paint (juce::Graphics& g)
     g.fillAll (juce::Colours::white);
 
     {
-        int x = 0, y = 208, width = 920, height = 178;
+        int x = 0, y = 208, width = 940, height = 348;
         juce::Colour fillColour1 = juce::Colour (0xff19313f), fillColour2 = juce::Colour (0xff041518);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -277,7 +255,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 0, y = 30, width = 920, height = 178;
+        int x = 0, y = 30, width = 940, height = 178;
         juce::Colour fillColour1 = juce::Colour (0xff19313f), fillColour2 = juce::Colour (0xff041518);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -292,7 +270,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        float x = 1.0f, y = 2.0f, width = 918.0f, height = 31.0f;
+        float x = 1.0f, y = 2.0f, width = 938.0f, height = 31.0f;
         juce::Colour fillColour1 = juce::Colour (0xff041518), fillColour2 = juce::Colour (0xff19313f);
         juce::Colour strokeColour = juce::Colour (0xffb9b9b9);
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -335,7 +313,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 220, y = 58, width = 480, height = 240;
+        int x = 220, y = 58, width = 460, height = 460;
         juce::Colour fillColour = juce::Colour (0x13f4f4f4);
         juce::Colour strokeColour = juce::Colour (0x67a0a0a0);
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -361,7 +339,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 576, y = 308, width = 124, height = 68;
+        int x = 692, y = 58, width = 236, height = 64;
         juce::Colour fillColour = juce::Colour (0x10f4f4f4);
         juce::Colour strokeColour = juce::Colour (0x67a0a0a0);
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -374,20 +352,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 712, y = 58, width = 196, height = 64;
-        juce::Colour fillColour = juce::Colour (0x10f4f4f4);
-        juce::Colour strokeColour = juce::Colour (0x67a0a0a0);
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setColour (fillColour);
-        g.fillRect (x, y, width, height);
-        g.setColour (strokeColour);
-        g.drawRect (x, y, width, height, 1);
-
-    }
-
-    {
-        int x = 712, y = 121, width = 196, height = 255;
+        int x = 692, y = 121, width = 236, height = 255;
         juce::Colour fillColour = juce::Colour (0x10f4f4f4);
         juce::Colour strokeColour = juce::Colour (0x67a0a0a0);
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -448,19 +413,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 587, y = 314, width = 132, height = 30;
-        juce::String text (TRANS("Show Inputs:"));
-        juce::Colour fillColour = juce::Colours::white;
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setColour (fillColour);
-        g.setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Bold"));
-        g.drawText (text, x, y, width, height,
-                    juce::Justification::centredLeft, true);
-    }
-
-    {
-        int x = 587, y = 346, width = 132, height = 30;
+        int x = 21, y = 131, width = 132, height = 30;
         juce::String text (TRANS("Show Outputs:"));
         juce::Colour fillColour = juce::Colours::white;
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -496,8 +449,8 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 66, y = 122, width = 108, height = 28;
-        juce::String text (juce::CharPointer_UTF8 ("Azi\xc2\xb0   #   Elev\xc2\xb0"));
+        int x = 713, y = 123, width = 165, height = 28;
+        juce::String text (juce::CharPointer_UTF8 ("#    Dist      Azi\xc2\xb0     Elev\xc2\xb0"));
         juce::Colour fillColour = juce::Colours::white;
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -508,19 +461,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 767, y = 122, width = 108, height = 28;
-        juce::String text (juce::CharPointer_UTF8 ("Azi\xc2\xb0   #   Elev\xc2\xb0"));
-        juce::Colour fillColour = juce::Colours::white;
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setColour (fillColour);
-        g.setFont (juce::Font (15.00f, juce::Font::plain).withTypefaceStyle ("Bold"));
-        g.drawText (text, x, y, width, height,
-                    juce::Justification::centredLeft, true);
-    }
-
-    {
-        int x = 0, y = 0, width = 922, height = 2;
+        int x = 0, y = 0, width = 942, height = 2;
         juce::Colour strokeColour = juce::Colour (0xffb9b9b9);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -530,7 +471,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 0, y = 0, width = 2, height = 386;
+        int x = 0, y = 0, width = 2, height = 556;
         juce::Colour strokeColour = juce::Colour (0xffb9b9b9);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -540,7 +481,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 918, y = 0, width = 2, height = 386;
+        int x = 938, y = 0, width = 2, height = 556;
         juce::Colour strokeColour = juce::Colour (0xffb9b9b9);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -550,7 +491,7 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 0, y = 0, width = 922, height = 2;
+        int x = 0, y = 0, width = 942, height = 2;
         juce::Colour strokeColour = juce::Colour (0xffb9b9b9);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -560,25 +501,12 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 0, y = 384, width = 922, height = 2;
+        int x = -3, y = 552, width = 942, height = 2;
         juce::Colour strokeColour = juce::Colour (0xffb9b9b9);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
         g.setColour (strokeColour);
         g.drawRect (x, y, width, height, 2);
-
-    }
-
-    {
-        int x = 437, y = 308, width = 124, height = 68;
-        juce::Colour fillColour = juce::Colour (0x10f4f4f4);
-        juce::Colour strokeColour = juce::Colour (0x67a0a0a0);
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setColour (fillColour);
-        g.fillRect (x, y, width, height);
-        g.setColour (strokeColour);
-        g.drawRect (x, y, width, height, 1);
 
     }
 
@@ -678,14 +606,7 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
     //[UserbuttonClicked_Pre]
     //[/UserbuttonClicked_Pre]
 
-    if (buttonThatWasClicked == TB_showInputs.get())
-    {
-        //[UserButtonCode_TB_showInputs] -- add your button handler code here..
-        panWindow->setShowInputs(TB_showInputs->getToggleState());
-        refreshPanViewWindow = true;
-        //[/UserButtonCode_TB_showInputs]
-    }
-    else if (buttonThatWasClicked == TB_showOutputs.get())
+    if (buttonThatWasClicked == TB_showOutputs.get())
     {
         //[UserButtonCode_TB_showOutputs] -- add your button handler code here..
         panWindow->setShowOutputs(TB_showOutputs->getToggleState());
@@ -747,7 +668,6 @@ void PluginEditor::timerCallback(int timerID)
 
         case TIMER_GUI_RELATED:
             /* refresh parameters that can change internally */
-            sourceCoordsView_handle->setNCH(panner_getNumSources(hPan));
             loudspeakerCoordsView_handle->setNCH(panner_getNumLoudspeakers(hPan));
             SL_num_sources->setValue(panner_getNumSources(hPan),dontSendNotification);
             SL_num_loudspeakers->setValue(panner_getNumLoudspeakers(hPan),dontSendNotification);
@@ -796,11 +716,10 @@ void PluginEditor::timerCallback(int timerID)
 
             /* refresh pan view */
             if((refreshPanViewWindow == true) || (panWindow->getSourceIconIsClicked()) ||
-               sourceCoordsView_handle->getHasASliderChanged() || loudspeakerCoordsView_handle->getHasASliderChanged() || hVst->getRefreshWindow()){
+                loudspeakerCoordsView_handle->getHasALabelChanged() || hVst->getRefreshWindow()){
                 panWindow->refreshPanView();
                 refreshPanViewWindow = false;
-                sourceCoordsView_handle->setHasASliderChange(false);
-                loudspeakerCoordsView_handle->setHasASliderChange(false);
+                loudspeakerCoordsView_handle->setHasALabelChange(false);
                 hVst->setRefreshWindow(false);
             }
 
@@ -847,7 +766,7 @@ BEGIN_JUCER_METADATA
                  parentClasses="public AudioProcessorEditor, public MultiTimer"
                  constructorParams="PluginProcessor* ownerFilter" variableInitialisers="AudioProcessorEditor(ownerFilter), progressbar(progress)"
                  snapPixels="8" snapActive="1" snapShown="1" overlayOpacity="0.330"
-                 fixedSize="1" initialWidth="920" initialHeight="386">
+                 fixedSize="1" initialWidth="920" initialHeight="556">
   <BACKGROUND backgroundColour="ffffffff">
     <RECT pos="0 208 920 178" fill="linear: 8 384, 8 304, 0=ff19313f, 1=ff041518"
           hasStroke="0"/>
@@ -863,8 +782,6 @@ BEGIN_JUCER_METADATA
     <RECT pos="220 58 480 240" fill="solid: 13f4f4f4" hasStroke="1" stroke="0.8, mitered, butt"
           strokeColour="solid: 67a0a0a0"/>
     <RECT pos="12 121 196 255" fill="solid: 10f4f4f4" hasStroke="1" stroke="0.8, mitered, butt"
-          strokeColour="solid: 67a0a0a0"/>
-    <RECT pos="576 308 124 68" fill="solid: 10f4f4f4" hasStroke="1" stroke="0.8, mitered, butt"
           strokeColour="solid: 67a0a0a0"/>
     <RECT pos="712 58 196 64" fill="solid: 10f4f4f4" hasStroke="1" stroke="0.8, mitered, butt"
           strokeColour="solid: 67a0a0a0"/>
@@ -882,10 +799,7 @@ BEGIN_JUCER_METADATA
     <TEXT pos="404 32 156 30" fill="solid: ffffffff" hasStroke="0" text="Calibration Window"
           fontname="Default font" fontsize="15.0" kerning="0.0" bold="1"
           italic="0" justification="33" typefaceStyle="Bold"/>
-    <TEXT pos="587 314 132 30" fill="solid: ffffffff" hasStroke="0" text="Show Inputs:"
-          fontname="Default font" fontsize="13.0" kerning="0.0" bold="1"
-          italic="0" justification="33" typefaceStyle="Bold"/>
-    <TEXT pos="587 346 132 30" fill="solid: ffffffff" hasStroke="0" text="Show Outputs:"
+    <TEXT pos="21 131 132 30" fill="solid: ffffffff" hasStroke="0" text="Show Outputs:"
           fontname="Default font" fontsize="13.0" kerning="0.0" bold="1"
           italic="0" justification="33" typefaceStyle="Bold"/>
     <TEXT pos="717 67 157 30" fill="solid: ffffffff" hasStroke="0" text="Number of Outputs:"
@@ -894,10 +808,7 @@ BEGIN_JUCER_METADATA
     <TEXT pos="16 1 100 32" fill="solid: ffffffff" hasStroke="0" text="Calibration"
           fontname="Default font" fontsize="18.8" kerning="0.0" bold="1"
           italic="0" justification="33" typefaceStyle="Bold"/>
-    <TEXT pos="66 122 108 28" fill="solid: ffffffff" hasStroke="0" text="Azi&#176;   #   Elev&#176;"
-          fontname="Default font" fontsize="15.0" kerning="0.0" bold="1"
-          italic="0" justification="33" typefaceStyle="Bold"/>
-    <TEXT pos="767 122 108 28" fill="solid: ffffffff" hasStroke="0" text="Azi&#176;   #   Elev&#176;"
+    <TEXT pos="733 123 155 28" fill="solid: ffffffff" hasStroke="0" text="#  Dist    Azi&#176;   Elev&#176;"
           fontname="Default font" fontsize="15.0" kerning="0.0" bold="1"
           italic="0" justification="33" typefaceStyle="Bold"/>
     <RECT pos="0 0 922 2" fill="solid: 61a52a" hasStroke="1" stroke="2, mitered, butt"
@@ -908,10 +819,8 @@ BEGIN_JUCER_METADATA
           strokeColour="solid: ffb9b9b9"/>
     <RECT pos="0 0 922 2" fill="solid: 61a52a" hasStroke="1" stroke="2, mitered, butt"
           strokeColour="solid: ffb9b9b9"/>
-    <RECT pos="0 384 922 2" fill="solid: 61a52a" hasStroke="1" stroke="2, mitered, butt"
+    <RECT pos="-3 552 922 2" fill="solid: 61a52a" hasStroke="1" stroke="2, mitered, butt"
           strokeColour="solid: ffb9b9b9"/>
-    <RECT pos="437 308 124 68" fill="solid: 10f4f4f4" hasStroke="1" stroke="0.8, mitered, butt"
-          strokeColour="solid: 67a0a0a0"/>
   </BACKGROUND>
   <COMBOBOX name="new combo box" id="5a2f99f88aa51390" memberName="CBsourceDirsPreset"
             virtualName="" explicitFocusOrder="0" pos="88 66 112 20" editable="0"
@@ -921,11 +830,8 @@ BEGIN_JUCER_METADATA
           max="64.0" int="1.0" style="LinearHorizontal" textBoxPos="TextBoxRight"
           textBoxEditable="1" textBoxWidth="60" textBoxHeight="20" skewFactor="1.0"
           needsCallback="1"/>
-  <TOGGLEBUTTON name="new toggle button" id="74817bb8a57611dc" memberName="TB_showInputs"
-                virtualName="" explicitFocusOrder="0" pos="672 317 24 24" buttonText=""
-                connectedEdges="0" needsCallback="1" radioGroupId="0" state="0"/>
   <TOGGLEBUTTON name="new toggle button" id="1a1dfbb1d4296140" memberName="TB_showOutputs"
-                virtualName="" explicitFocusOrder="0" pos="672 349 24 24" buttonText=""
+                virtualName="" explicitFocusOrder="0" pos="152 136 24 24" buttonText=""
                 connectedEdges="0" needsCallback="1" radioGroupId="0" state="0"/>
   <SLIDER name="new slider" id="cbb243fa14b960d0" memberName="SL_num_loudspeakers"
           virtualName="" explicitFocusOrder="0" pos="856 72 40 20" min="2.0"
@@ -940,7 +846,7 @@ BEGIN_JUCER_METADATA
               bgColOn="ff181f9a" buttonText="Export" connectedEdges="0" needsCallback="1"
               radioGroupId="0"/>
   <TEXTBUTTON name="new button" id="4288576c9eb666b4" memberName="tb_calibration"
-              virtualName="" explicitFocusOrder="0" pos="448 328 104 32" bgColOff="ff3c393c"
+              virtualName="" explicitFocusOrder="0" pos="56 168 104 32" bgColOff="ff3c393c"
               buttonText="Calibrate" connectedEdges="3" needsCallback="1" radioGroupId="0"/>
 </JUCER_COMPONENT>
 

@@ -89,10 +89,6 @@ private:
     /* Look and Feel */
     SPARTALookAndFeel LAF;
 
-    /* source coordinates viewport */
-    std::unique_ptr<Viewport> sourceCoordsVP;
-    inputCoordsView* sourceCoordsView_handle;
-
     /* loudspeaker coordinates viewport */
     std::unique_ptr<Viewport> loudspeakerCoordsVP;
     outputCoordsView* loudspeakerCoordsView_handle;
@@ -116,7 +112,6 @@ private:
     //==============================================================================
     std::unique_ptr<juce::ComboBox> CBsourceDirsPreset;
     std::unique_ptr<juce::Slider> SL_num_sources;
-    std::unique_ptr<juce::ToggleButton> TB_showInputs;
     std::unique_ptr<juce::ToggleButton> TB_showOutputs;
     std::unique_ptr<juce::Slider> SL_num_loudspeakers;
     std::unique_ptr<juce::TextButton> tb_loadJSON_src;

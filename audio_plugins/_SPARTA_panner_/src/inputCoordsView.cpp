@@ -36,7 +36,7 @@ inputCoordsView::inputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, int
     //[/Constructor_pre]
 
     dummySlider.reset (new juce::Slider ("new slider"));
-    addAndMakeVisible (dummySlider.get());
+    //addAndMakeVisible (dummySlider.get());
     dummySlider->setRange (0.01, 0.3, 0.001);
     dummySlider->setSliderStyle (juce::Slider::LinearHorizontal);
     dummySlider->setTextBoxStyle (juce::Slider::TextBoxRight, false, 70, 20);
@@ -63,7 +63,7 @@ inputCoordsView::inputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, int
     for( int i=0; i<maxNCH; i++){
         /* create and initialise azimuth sliders */
         aziSliders[i].reset (new Slider ("new slider"));
-        addAndMakeVisible (aziSliders[i].get());
+        //addAndMakeVisible (aziSliders[i].get());
         aziSliders[i]->setRange (-360.0, 360.0, 0.001);
         aziSliders[i]->setValue(panner_getSourceAzi_deg(hPan, i));
         aziSliders[i]->setSliderStyle (Slider::LinearHorizontal);
@@ -73,7 +73,7 @@ inputCoordsView::inputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, int
 
         /* create and initialise elevation sliders */
         elevSliders[i].reset (new Slider ("new slider"));
-        addAndMakeVisible (elevSliders[i].get());
+        //addAndMakeVisible (elevSliders[i].get());
         elevSliders[i]->setRange (-180.0, 180.0, 0.001);
         elevSliders[i]->setValue(panner_getSourceElev_deg(hPan, i));
         elevSliders[i]->setSliderStyle (Slider::LinearHorizontal);
@@ -118,14 +118,14 @@ void inputCoordsView::paint (juce::Graphics& g)
         juce::Colour fillColour1 = juce::Colour (0x21ffffff), fillColour2 = juce::Colour (0x05252a25);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
-        g.setGradientFill (juce::ColourGradient (fillColour1,
-                                             88.0f - 88.0f + x,
-                                             128.0f - 0.0f + y,
-                                             fillColour2,
-                                             176.0f - 88.0f + x,
-                                             128.0f - 0.0f + y,
-                                             false));
-        g.fillRect (x, y, width, height);
+        //g.setGradientFill (juce::ColourGradient (fillColour1,
+        //                                     88.0f - 88.0f + x,
+        //                                     128.0f - 0.0f + y,
+        //                                     fillColour2,
+        //                                     176.0f - 88.0f + x,
+        //                                     128.0f - 0.0f + y,
+        //                                     false));
+        //g.fillRect (x, y, width, height);
     }
 
     {
@@ -133,14 +133,14 @@ void inputCoordsView::paint (juce::Graphics& g)
         juce::Colour fillColour1 = juce::Colour (0x21ffffff), fillColour2 = juce::Colour (0x05252a25);
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
-        g.setGradientFill (juce::ColourGradient (fillColour1,
-                                             88.0f - 0.0f + x,
-                                             128.0f - 0.0f + y,
-                                             fillColour2,
-                                             0.0f - 0.0f + x,
-                                             128.0f - 0.0f + y,
-                                             false));
-        g.fillRect (x, y, width, height);
+        //g.setGradientFill (juce::ColourGradient (fillColour1,
+        //                                     88.0f - 0.0f + x,
+        //                                     128.0f - 0.0f + y,
+        //                                     fillColour2,
+        //                                     0.0f - 0.0f + x,
+        //                                     128.0f - 0.0f + y,
+        //                                     false));
+       // g.fillRect (x, y, width, height);
     }
 
     //[UserPaint] Add your own custom painting code here..
@@ -148,18 +148,18 @@ void inputCoordsView::paint (juce::Graphics& g)
     g.setColour (fillColour);
     g.setFont (Font (15.00f, Font::plain).withTypefaceStyle ("Regular"));
 
-    for( int i=0; i<maxNCH; i++){
+    for( int i=0; i<maxNCH; i++){ //XXXX
         /* draw sensor IDs */
-        g.setColour (fillColour);
-        g.drawText (String(i+1), 72, 5+ i*sensorEdit_height, 33, 23,
-                    Justification::centred, true);
+        //g.setColour (fillColour);
+       // g.drawText (String(i+1), 72, 5+ i*sensorEdit_height, 33, 23,
+        //            Justification::centred, true);
 
         /* draw rectangle around sensor parameter */
         //Colour strokeColour = Colour (0x2370702b);
         //g.setColour (strokeColour);
-        g.setColour(Colours::white);
-        g.setOpacity(0.15f);
-        g.drawRect (0, i*sensorEdit_height, sensorEdit_width, sensorEdit_height+1, 1);
+      //  g.setColour(Colours::white);
+      //  g.setOpacity(0.15f);
+      //  g.drawRect (0, i*sensorEdit_height, sensorEdit_width, sensorEdit_height+1, 1);
     }
 
 
