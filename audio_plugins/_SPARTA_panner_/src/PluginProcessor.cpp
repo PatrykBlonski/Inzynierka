@@ -51,6 +51,8 @@ PluginProcessor::~PluginProcessor()
 
 
 void PluginProcessor::startCalibration() {
+    prepareToPlay(getSampleRate(), 240000);
+
     calibrating = true;
     phase = 0.0;
     timeElapsed = 0.0;
@@ -61,6 +63,28 @@ void PluginProcessor::startCalibration() {
 }
 
 void PluginProcessor::endCalibration() {
+    dsp::AudioBlock<float> block(recordingBuffer);
+    // Create an AudioBlock and ProcessContext for the current channel only
+    dsp::AudioBlock<float> channelBlock = block.getSingleChannelBlock(0);
+    dsp::ProcessContextReplacing<float> context(channelBlock);
+    // Perform the convolution
+    convolution1.process(context);
+    channelBlock = block.getSingleChannelBlock(1);
+    dsp::ProcessContextReplacing<float> context1(channelBlock);
+    // Perform the convolution
+    convolution2.process(context1);
+
+    channelBlock = block.getSingleChannelBlock(2);
+    dsp::ProcessContextReplacing<float> context2(channelBlock);
+    // Perform the convolution
+    convolution3.process(context2);
+
+    channelBlock = block.getSingleChannelBlock(3);
+    dsp::ProcessContextReplacing<float> context3(channelBlock);
+    // Perform the convolution
+    convolution4.process(context3);
+
+    //panner_beamformer_process(recordingBuffer.getReadPointer(1), recordingBuffer.getReadPointer(2), recordingBuffer.getReadPointer(3), recordingBuffer.getNumSamples(), bhPan, hPan);
     loudspeakerNumber++;
     if (loudspeakerNumber >= panner_getNumLoudspeakers(hPan)) {
         calibrating = 0;
@@ -71,6 +95,8 @@ void PluginProcessor::endCalibration() {
         timeElapsed = 0.0;
         frequency = startFrequency;
         currentRecordingPosition = 0;
+        isRecording = false;
+
     }
 }
 
@@ -315,9 +341,14 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = panner_getNumSources(hPan);
+    spec.numChannels = 1; // Each convolution instance is mono
 
-    convolution.prepare(spec);
+    // Prepare each convolution instance
+    convolution1.prepare(spec);
+    convolution2.prepare(spec);
+    convolution3.prepare(spec);
+    convolution4.prepare(spec);
+
     loadImpulseResponse();
 }
 
@@ -364,7 +395,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     const double sampleRate = getSampleRate();
     const double deltaT = 1.0 / sampleRate;  // Time increment per sample
     int numberOfInputs = panner_getNumSources(hPan);
-    recordingBuffer.setSize(1, sampleRate * 5);
+    recordingBuffer.setSize(totalNumOutputChannels, sampleRate * 5);
 
 
     // Clear any unused channels
@@ -374,7 +405,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
 
 
     if (calibrating) {
-        prepareToPlay(sampleRate, numSamples);
+       // prepareToPlay(sampleRate, numSamples);
         /*if (buffer.getNumSamples() != 0 && buffer.getNumChannels() != 0) {
             ImpulseBuffer = loadImpulseResponse("C:/Users/patry/Desktop/impulse_responses/impulse_responses");
         }*/
@@ -384,11 +415,10 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
         for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
             // recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel-1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-        /*    dsp::AudioBlock<float> block(recordingBuffer);
-            dsp::ProcessContextReplacing<float> context(block);
-            convolution.process(context);
-            convolution.*/
+            recordingBuffer.copyFrom(channel - 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            recordingBuffer.copyFrom(channel + 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            recordingBuffer.copyFrom(channel + 2, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
         }
         currentRecordingPosition += buffer.getNumSamples();
     }
@@ -403,14 +433,56 @@ void PluginProcessor::loadImpulseResponse()
     AudioBuffer<float> irBuffer = loadImpulseResponse(juceStringPath);
 
 
-    // Load the impulse response into the convolution object
-    convolution.loadImpulseResponse(
-        std::move(irBuffer),
-        getSampleRate(),
-        dsp::Convolution::Stereo::no,
-        dsp::Convolution::Trim::no,
-        dsp::Convolution::Normalise::yes
-    );
+    // Load the impulse response for each channel into each convolution instance
+    if (irBuffer.getNumChannels() == 4)
+    {
+        // You should create an AudioBuffer for each channel
+        AudioBuffer<float> singleChannelIR1(1, irBuffer.getNumSamples());
+        AudioBuffer<float> singleChannelIR2(1, irBuffer.getNumSamples());
+        AudioBuffer<float> singleChannelIR3(1, irBuffer.getNumSamples());
+        AudioBuffer<float> singleChannelIR4(1, irBuffer.getNumSamples());
+        singleChannelIR1.copyFrom(0, 0, irBuffer, 0, 0, irBuffer.getNumSamples());
+        singleChannelIR2.copyFrom(0, 0, irBuffer, 1, 0, irBuffer.getNumSamples());
+        singleChannelIR3.copyFrom(0, 0, irBuffer, 2, 0, irBuffer.getNumSamples());
+        singleChannelIR4.copyFrom(0, 0, irBuffer, 3, 0, irBuffer.getNumSamples());
+        // Load the impulse response into the convolution object
+        convolution1.loadImpulseResponse(
+            std::move(singleChannelIR1),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+
+        convolution2.loadImpulseResponse(
+            std::move(singleChannelIR2),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+
+        convolution3.loadImpulseResponse(
+            std::move(singleChannelIR3),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+
+        convolution4.loadImpulseResponse(
+            std::move(singleChannelIR4),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+        // ... Repeat for convolution2, convolution3, convolution4 with appropriate channels
+    }
+    else
+    {
+        DBG("The impulse response buffer does not have enough channels.");
+    }
 }
 
 void PluginProcessor::saveBufferToWav()

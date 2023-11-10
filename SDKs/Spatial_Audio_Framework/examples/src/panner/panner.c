@@ -42,7 +42,6 @@
  */
  
 #include "panner_internal.h"
-
 void panner_create
 (
     void ** const phPan,
@@ -199,12 +198,14 @@ void panner_initCodec
     
 }
 
-float panner_beamform(float X[], float Y[], float Z[], Direction * bData, int num_samples) {
+float panner_beamform(const float X[], const float Y[], const float Z[], void* const bPan, int index, int num_samples) {
+    Direction* bData = (Direction*)(bPan);
+
     float energy = 0.0f;
     for (int i = 0; i < num_samples; i++) {
-        float ux = bData->sinPhi * bData->cosTheta;
-        float uy = bData->sinPhi * bData->sinTheta;
-        float uz = bData->cosPhi;
+        float ux = bData[index].sinPhi * bData[index].cosTheta;
+        float uy = bData[index].sinPhi * bData[index].sinTheta;
+        float uz = bData[index].cosPhi;
 
         float sample_energy = ux * X[i] + uy * Y[i] + uz * Z[i];
         energy += sample_energy * sample_energy; // Assuming energy is sum of squared sample energies
@@ -212,7 +213,7 @@ float panner_beamform(float X[], float Y[], float Z[], Direction * bData, int nu
     return energy;
 }
 
-float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples, void * const bPan, void * const hPan)
+float panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, void * const bPan, void * const hPan)
 {
     Direction* bData = (Direction*)(bPan);
     panner_data* pData = (panner_data*)(hPan);
@@ -221,7 +222,7 @@ float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples,
 
 #pragma omp parallel for reduction(max:maxEnergy)
     for (int i = 0; i < THETA_STEPS * PHI_STEPS; i++) {
-        float energy = panner_beamform(X, Y, Z, &bData[i], numSamples);
+        float energy = panner_beamform(X, Y, Z, &bData[i], i, numSamples);
         if (energy > maxEnergy) {
 #pragma omp critical
             {

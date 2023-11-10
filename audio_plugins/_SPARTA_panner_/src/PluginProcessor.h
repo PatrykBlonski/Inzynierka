@@ -110,7 +110,10 @@ private:
     bool isRecording = false;
     int currentRecordingPosition = 0;
     int loudspeakerNumber = 0;
-    dsp::Convolution convolution;
+    dsp::Convolution convolution1;
+    dsp::Convolution convolution2;
+    dsp::Convolution convolution3;
+    dsp::Convolution convolution4;
 
 
     void timerCallback(int timerID) override

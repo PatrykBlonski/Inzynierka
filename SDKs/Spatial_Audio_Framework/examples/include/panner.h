@@ -56,6 +56,8 @@
 
 #include "_common.h"
 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -116,8 +118,9 @@ void panner_init(void* const hPan,
  * @param[in] hPan panner handle
  */
 void panner_initCodec(void* const hPan);
-float panner_beamform(float X[], float Y[], float Z[], void* const bPan, int num_samples);
-float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples, void* const bPan);
+float panner_beamform(const float X[], const float Y[], const float Z[], void* const bPan, int index, int num_samples);
+float panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, void* const bPan, void* const hPan);
+
 /**
  * Pans the input signals/sources to the loudspeaker channels using VBAP [1],
  * and optional spreading [2] and frequency-dependent normalisation as a
