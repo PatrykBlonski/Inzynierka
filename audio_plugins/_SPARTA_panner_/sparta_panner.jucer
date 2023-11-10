@@ -292,6 +292,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </VS2017>
     <XCODE_MAC targetFolder="make/MacOSX/Xcode/" vstFolder="../../../SDKs/VST3 SDK"
@@ -323,6 +324,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="make/LinuxMakefile" extraLinkerFlags="-L/usr/local/lib -lsaf_mkl_custom_lp64 -lsaf_ipp_custom&#10;-Wl,-rpath,/usr/local/lib"
@@ -347,6 +349,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
     <LINUX_MAKE targetFolder="make/LinuxMakefileRaspberryPI" extraDefs="SAF_USE_OPEN_BLAS_AND_LAPACKE"
@@ -369,6 +372,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
     <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="SAF_USE_INTEL_MKL_LP64&#10;SAF_USE_INTEL_IPP"
@@ -393,6 +397,7 @@
         <MODULEPATH id="juce_gui_basics" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_gui_extra" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_opengl" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>
@@ -405,6 +410,7 @@
     <MODULES id="juce_core" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_cryptography" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_data_structures" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULES id="juce_events" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_graphics" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_gui_basics" showAllCode="1" useLocalCopy="0"/>

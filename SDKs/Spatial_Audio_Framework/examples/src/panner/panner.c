@@ -140,6 +140,7 @@ void panner_destroy
         pData = NULL;
 
         free(bData);
+        bData = NULL;
     }
 }
 
@@ -211,9 +212,10 @@ float panner_beamform(float X[], float Y[], float Z[], Direction * bData, int nu
     return energy;
 }
 
-float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples, void * const bPan)
+float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples, void * const bPan, void * const hPan)
 {
     Direction* bData = (Direction*)(bPan);
+    panner_data* pData = (panner_data*)(hPan);
     float maxEnergy = -1e9f;
     float bestTheta = 0.0f, bestPhi = 0.0f;
 
@@ -235,6 +237,9 @@ float panner_beamformer_process(float X[], float Y[], float Z[], int numSamples,
     printf("Best direction:\n");
     printf("Azimuth (theta) = %f degrees\n", bestTheta * 180.0f / PI);
     printf("Elevation (phi) = %f degrees\n", bestPhi * 180.0f / PI);
+    panner_setLoudspeakerAzi_deg(hPan, 0, bestTheta);
+    panner_setLoudspeakerElev_deg(hPan, 0, bestPhi);
+    
 
     return bestTheta, bestPhi;
 }
@@ -414,10 +419,10 @@ void panner_refreshSettings(void* const hPan)
 void panner_setSourceAzi_deg(void* const hPan, int index, float newAzi_deg)
 {
     panner_data *pData = (panner_data*)(hPan);
-    if(newAzi_deg>180.0f)
-        newAzi_deg = -360.0f + newAzi_deg;
-    newAzi_deg = SAF_MAX(newAzi_deg, -180.0f);
-    newAzi_deg = SAF_MIN(newAzi_deg, 180.0f);
+   // if(newAzi_deg>180.0f)
+   //     newAzi_deg = -360.0f + newAzi_deg;
+    newAzi_deg = SAF_MAX(newAzi_deg, 0.0f);
+    newAzi_deg = SAF_MIN(newAzi_deg, 360.0f);
     if(pData->src_dirs_deg[index][0] != newAzi_deg){
         pData->src_dirs_deg[index][0] = newAzi_deg;
         pData->recalc_gainsFLAG[index] = 1;
@@ -456,10 +461,10 @@ void panner_setLoudspeakerAzi_deg(void* const hPan, int index, float newAzi_deg)
 {
     panner_data *pData = (panner_data*)(hPan);
     int ch;
-    if(newAzi_deg>180.0f)
-        newAzi_deg = -360.0f + newAzi_deg;
-    newAzi_deg = SAF_MAX(newAzi_deg, -180.0f);
-    newAzi_deg = SAF_MIN(newAzi_deg, 180.0f);
+   // if(newAzi_deg>180.0f)
+  //      newAzi_deg = -360.0f + newAzi_deg;
+    newAzi_deg = SAF_MAX(newAzi_deg, 0.0f);
+    newAzi_deg = SAF_MIN(newAzi_deg, 360.0f);
     if(pData->loudpkrs_dirs_deg[index][0] != newAzi_deg){
         pData->loudpkrs_dirs_deg[index][0] = newAzi_deg;
         pData->reInitGainTables=1;

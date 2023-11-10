@@ -48,6 +48,8 @@ PluginProcessor::~PluginProcessor()
 	panner_destroy(&hPan, &bhPan);
 }
 
+
+
 void PluginProcessor::startCalibration() {
     calibrating = true;
     phase = 0.0;
@@ -296,16 +298,27 @@ void PluginProcessor::changeProgramName (int /*index*/, const String& /*newName*
 {
 }
 
-void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{
-    nHostBlockSize = samplesPerBlock;
-    nNumInputs =  getTotalNumInputChannels();
-    nNumOutputs = getTotalNumOutputChannels();
-    nSampleRate = (int)(sampleRate + 0.5);
-    isPlaying = false;
+//void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+//{
+//    nHostBlockSize = samplesPerBlock;
+//    nNumInputs =  getTotalNumInputChannels();
+//    nNumOutputs = getTotalNumOutputChannels();
+//    nSampleRate = (int)(sampleRate + 0.5);
+//    isPlaying = false;
+//
+//	panner_init(hPan, nSampleRate);
+//    AudioProcessor::setLatencySamples(panner_getProcessingDelay());
+//}
 
-	panner_init(hPan, nSampleRate);
-    AudioProcessor::setLatencySamples(panner_getProcessingDelay());
+void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+{
+    dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = panner_getNumSources(hPan);
+
+    convolution.prepare(spec);
+    loadImpulseResponse();
 }
 
 void PluginProcessor::releaseResources()
@@ -351,7 +364,8 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     const double sampleRate = getSampleRate();
     const double deltaT = 1.0 / sampleRate;  // Time increment per sample
     int numberOfInputs = panner_getNumSources(hPan);
-    recordingBuffer.setSize(numberOfInputs, sampleRate * 5);
+    recordingBuffer.setSize(1, sampleRate * 5);
+
 
     // Clear any unused channels
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
@@ -359,17 +373,39 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     }
 
 
-
     if (calibrating) {
+        prepareToPlay(sampleRate, numSamples);
+        /*if (buffer.getNumSamples() != 0 && buffer.getNumChannels() != 0) {
+            ImpulseBuffer = loadImpulseResponse("C:/Users/patry/Desktop/impulse_responses/impulse_responses");
+        }*/
         generateSine(deltaT, buffer);
     }
 
     if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
-        for (int channel = 0; channel < numberOfInputs; ++channel) {
+        for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
+            // recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            dsp::AudioBlock<float> block(recordingBuffer);
+            dsp::ProcessContextReplacing<float> context(block);
+            convolution.process(context);
         }
         currentRecordingPosition += buffer.getNumSamples();
     }
+}
+
+void PluginProcessor::loadImpulseResponse()
+{
+    // Assuming you have a method to load an AudioBuffer with your IR...
+    AudioBuffer<float> irBuffer = loadImpulseResponse("C:/Users/patry/Desktop/impulse_responses/impulse_responses/impulse_response_0.wav");
+
+    // Load the impulse response into the convolution object
+    convolution.loadImpulseResponse(
+        std::move(irBuffer),
+        getSampleRate(),
+        dsp::Convolution::Stereo::no,
+        dsp::Convolution::Trim::no,
+        dsp::Convolution::Normalise::yes
+    );
 }
 
 void PluginProcessor::saveBufferToWav()
@@ -405,6 +441,45 @@ void PluginProcessor::saveBufferToWav()
         writer->writeFromAudioSampleBuffer(recordingBuffer, 0, recordingBuffer.getNumSamples());
     }
 }
+
+AudioBuffer<float> PluginProcessor::loadImpulseResponse(const String& filePath)
+{
+    AudioBuffer<float> buffer;
+
+    // Create a file object from the provided file path
+    File file(filePath);
+
+    // Check if the file exists before trying to read
+    if (!file.existsAsFile())
+    {
+        DBG("File does not exist: " << filePath);
+        return buffer; // Return an empty buffer if file doesn't exist
+    }
+
+    // Create an instance of the format manager
+    AudioFormatManager formatManager;
+    formatManager.registerBasicFormats(); // Register the basic formats (WAV, AIFF, etc.)
+
+    // Create a format reader for the file
+    std::unique_ptr<AudioFormatReader> reader(formatManager.createReaderFor(file));
+
+    if (reader.get() != nullptr)
+    {
+        // Create an AudioBuffer to hold the data
+        buffer.setSize((int)reader->numChannels, (int)reader->lengthInSamples);
+
+        // Read the entire content of the file into the buffer
+        reader->read(&buffer, 0, (int)reader->lengthInSamples, 0, true, true);
+    }
+    else
+    {
+        DBG("Could not create audio format reader for file: " << filePath);
+    }
+
+    return buffer;
+}
+
+
 
 //==============================================================================
 bool PluginProcessor::hasEditor() const

@@ -58,6 +58,7 @@ class PluginProcessor  : public AudioProcessor,
 {
 public:
     AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
+    AudioBuffer<float> ImpulseBuffer;
     //AudioProcessorValueTreeState parameters;
     /* Get functions */
     void* getFXHandle() { return hPan; }
@@ -109,6 +110,7 @@ private:
     bool isRecording = false;
     int currentRecordingPosition = 0;
     int loudspeakerNumber = 0;
+    dsp::Convolution convolution;
 
 
     void timerCallback(int timerID) override
@@ -142,6 +144,8 @@ public:
     void PluginProcessor::endCalibration();
     void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer);
     void PluginProcessor::saveBufferToWav();
+    AudioBuffer<float> loadImpulseResponse(const String& filePath);
+    void loadImpulseResponse();
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
