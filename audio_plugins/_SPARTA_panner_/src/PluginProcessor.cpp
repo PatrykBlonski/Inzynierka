@@ -384,10 +384,11 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
         for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
             // recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            dsp::AudioBlock<float> block(recordingBuffer);
+            recordingBuffer.copyFrom(channel-1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+        /*    dsp::AudioBlock<float> block(recordingBuffer);
             dsp::ProcessContextReplacing<float> context(block);
             convolution.process(context);
+            convolution.*/
         }
         currentRecordingPosition += buffer.getNumSamples();
     }
@@ -396,7 +397,11 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
 void PluginProcessor::loadImpulseResponse()
 {
     // Assuming you have a method to load an AudioBuffer with your IR...
-    AudioBuffer<float> irBuffer = loadImpulseResponse("C:/Users/patry/Desktop/impulse_responses/impulse_responses/impulse_response_0.wav");
+    std::string stdStringPath = "C:\\Users\\patry\\Documents\\impulse_response_0.wav";
+    //std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
+    juce::String juceStringPath(stdStringPath);
+    AudioBuffer<float> irBuffer = loadImpulseResponse(juceStringPath);
+
 
     // Load the impulse response into the convolution object
     convolution.loadImpulseResponse(
@@ -411,6 +416,7 @@ void PluginProcessor::loadImpulseResponse()
 void PluginProcessor::saveBufferToWav()
 {
     // File path
+
     juce::File outputFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("recorded_audio.wav");
 
     // Create an AudioFormatManager and register the WAV format
@@ -446,34 +452,33 @@ AudioBuffer<float> PluginProcessor::loadImpulseResponse(const String& filePath)
 {
     AudioBuffer<float> buffer;
 
-    // Create a file object from the provided file path
     File file(filePath);
-
-    // Check if the file exists before trying to read
     if (!file.existsAsFile())
     {
         DBG("File does not exist: " << filePath);
-        return buffer; // Return an empty buffer if file doesn't exist
+        return buffer;
     }
 
-    // Create an instance of the format manager
     AudioFormatManager formatManager;
-    formatManager.registerBasicFormats(); // Register the basic formats (WAV, AIFF, etc.)
+    formatManager.registerBasicFormats();
+    auto variable = formatManager.createReaderFor(file);
 
-    // Create a format reader for the file
-    std::unique_ptr<AudioFormatReader> reader(formatManager.createReaderFor(file));
-
-    if (reader.get() != nullptr)
+    std::unique_ptr<AudioFormatReader> reader(variable);
+    if (reader)
     {
-        // Create an AudioBuffer to hold the data
-        buffer.setSize((int)reader->numChannels, (int)reader->lengthInSamples);
-
-        // Read the entire content of the file into the buffer
-        reader->read(&buffer, 0, (int)reader->lengthInSamples, 0, true, true);
+        if (reader->usesFloatingPointData) // Check if the reader can handle floating-point data
+        {
+            buffer.setSize((int)reader->numChannels, (int)reader->lengthInSamples);
+            reader->read(&buffer, 0, (int)reader->lengthInSamples, 0, true, true);
+        }
+        else
+        {
+            DBG("The file is not in a floating-point format.");
+        }
     }
     else
     {
-        DBG("Could not create audio format reader for file: " << filePath);
+        DBG("Failed to create audio format reader for file: " << filePath);
     }
 
     return buffer;

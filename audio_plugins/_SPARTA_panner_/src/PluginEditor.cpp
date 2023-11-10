@@ -649,6 +649,7 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
     else if (buttonThatWasClicked == tb_calibration.get())
     {
         //[UserButtonCode_tb_calibration] -- add your button handler code here..
+        hVst->startCalibration();
         //[/UserButtonCode_tb_calibration]
     }
 
