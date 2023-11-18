@@ -147,8 +147,8 @@ typedef struct _beam {
 } Direction;
 
 #define PI 3.14159265358979323846f
-#define THETA_STEPS 2
-#define PHI_STEPS 1
+#define THETA_STEPS 60
+#define PHI_STEPS 45
 /* ========================================================================== */
 /*                             Internal Functions                             */
 /* ========================================================================== */

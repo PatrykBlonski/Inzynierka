@@ -146,7 +146,7 @@ public:
     void PluginProcessor::startCalibration();
     void PluginProcessor::endCalibration();
     void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer);
-    void PluginProcessor::saveBufferToWav();
+    void PluginProcessor::saveBufferToWav(AudioBuffer<float>& buffer);
     AudioBuffer<float> loadImpulseResponse(const String& filePath);
     void loadImpulseResponse();
 

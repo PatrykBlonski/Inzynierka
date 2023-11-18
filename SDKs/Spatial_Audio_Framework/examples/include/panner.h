@@ -119,7 +119,7 @@ void panner_init(void* const hPan,
  */
 void panner_initCodec(void* const hPan);
 float panner_beamform(const float X[], const float Y[], const float Z[], void* const bPan, int index, int num_samples);
-float panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, void* const bPan, void* const hPan);
+void panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, void* const bPan, void* const hPan);
 
 /**
  * Pans the input signals/sources to the loudspeaker channels using VBAP [1],
