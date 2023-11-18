@@ -127,7 +127,7 @@ typedef struct _panner
     float DTT;                      /**< Room coefficient [3] */
     float spread_deg;               /**< Source spread/MDAP [2] */
     int nLoudpkrs;                  /**< Current number of loudspeakers in the array */
-    float loudpkrs_dirs_deg[MAX_NUM_OUTPUTS][2]; /**< Current loudspeaker directions */
+    float loudpkrs_dirs_deg[MAX_NUM_OUTPUTS][3]; /**< Current loudspeaker directions */
     float yaw;                      /**< yaw (Euler) rotation angle, in degrees */
     float roll;                     /**< roll (Euler) rotation angle, in degrees */
     float pitch;                    /**< pitch (Euler) rotation angle, in degrees */

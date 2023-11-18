@@ -106,20 +106,33 @@ void PluginProcessor::setParameter (int index, float newValue)
         }
     }
     /* loudspeaker direction parameters */
-    else{
-        index -= (k_NumOfParameters+2*MAX_NUM_INPUTS);
+    else {
+        index -= (k_NumOfParameters + 2 * MAX_NUM_INPUTS);
         float newValueScaled;
-        if (!(index % 2)){
-            newValueScaled = (newValue - 0.5f)*360.0f;
-            if (newValueScaled != panner_getLoudspeakerAzi_deg(hPan, index/2)){
-                panner_setLoudspeakerAzi_deg(hPan, index/2, newValueScaled);
+        int loudspeakerIndex = index / 3;
+
+        if (index % 3 == 0) {
+            // Azimuth
+            newValueScaled = (newValue - 0.5f) * 360.0f;
+            if (newValueScaled != panner_getLoudspeakerAzi_deg(hPan, loudspeakerIndex)) {
+                panner_setLoudspeakerAzi_deg(hPan, loudspeakerIndex, newValueScaled);
                 refreshWindow = true;
             }
         }
-        else{
-            newValueScaled = (newValue - 0.5f)*180.0f;
-            if (newValueScaled != panner_getLoudspeakerElev_deg(hPan, index/2)){
-                panner_setLoudspeakerElev_deg(hPan, index/2, newValueScaled);
+        else if (index % 3 == 1) {
+            // Elevation
+            newValueScaled = (newValue - 0.5f) * 180.0f;
+            if (newValueScaled != panner_getLoudspeakerElev_deg(hPan, loudspeakerIndex)) {
+                panner_setLoudspeakerElev_deg(hPan, loudspeakerIndex, newValueScaled);
+                refreshWindow = true;
+            }
+        }
+        else {
+            // Distance
+            // Assuming a maximum distance of MAX_DISTANCE
+            newValueScaled = newValue * 10;
+            if (newValueScaled != panner_getLoudspeakerDist_deg(hPan, loudspeakerIndex)) {
+                panner_setLoudspeakerDist_deg(hPan, loudspeakerIndex, newValueScaled);
                 refreshWindow = true;
             }
         }
@@ -567,6 +580,7 @@ void PluginProcessor::loadConfiguration (const File& configFile, int srcOrLs)
                 for (ValueTree::Iterator it = elements.begin() ; it != elements.end(); ++it){
                     if ( !((*it).getProperty("Imaginary"))){
                         panner_setLoudspeakerAzi_deg(hPan, channelIDs[el_idx]-1, (*it).getProperty("Azimuth"));
+                        panner_setLoudspeakerDist_deg(hPan, channelIDs[el_idx] - 1, (*it).getProperty("Distance")); //XXXX
                         panner_setLoudspeakerElev_deg(hPan, channelIDs[el_idx]-1, (*it).getProperty("Elevation"));
                         el_idx++;
                     }
