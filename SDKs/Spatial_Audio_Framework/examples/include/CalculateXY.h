@@ -9,3 +9,5 @@
 */
 
 #pragma once
+double toRadians(double degrees);
+void calculateCoordinates(double distance, double azimuth, double* x, double* y); //we get x and y

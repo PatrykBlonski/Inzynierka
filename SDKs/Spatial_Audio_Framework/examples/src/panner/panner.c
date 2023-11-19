@@ -422,7 +422,7 @@ void panner_setLoudspeakerDist_deg(void* const hPan, int index, float newDist) /
     panner_data* pData = (panner_data*)(hPan);
     int ch;
     newDist = SAF_MAX(newDist, 0.0f); //min distance
-    newDist = SAF_MAX(newDist, 10.0f); //max distance
+    newDist = SAF_MIN(newDist, 10.0f); //max distance
 
     if (pData->loudpkrs_dirs_deg[index][2] != newDist) { //not sure if index is 2?
         pData->loudpkrs_dirs_deg[index][2] = newDist;

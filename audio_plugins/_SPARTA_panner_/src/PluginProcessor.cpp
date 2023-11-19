@@ -130,7 +130,7 @@ void PluginProcessor::setParameter (int index, float newValue)
         else {
             // Distance
             // Assuming a maximum distance of MAX_DISTANCE
-            newValueScaled = newValue * 10;
+            newValueScaled = newValue * 10.0f;
             if (newValueScaled != panner_getLoudspeakerDist_deg(hPan, loudspeakerIndex)) {
                 panner_setLoudspeakerDist_deg(hPan, loudspeakerIndex, newValueScaled);
                 refreshWindow = true;
