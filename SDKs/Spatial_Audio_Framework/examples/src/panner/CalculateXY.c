@@ -15,14 +15,14 @@
 #define PI 3.14159265358979323846
 
 // Function to convert degrees to radians
-double toRadians(double degrees) 
+float toRadians(float degrees) 
 {
     return degrees * (PI / 180.0);
 }
 
-void calculateCoordinates(double distance, double azimuth, double* x, double* y) //we get x and y
+void calculateCoordinates(float distance, float azimuth, float* x, float* y) //we get x and y
 {
-    double azimuthRadians = toRadians(azimuth);
+    float azimuthRadians = toRadians(azimuth);
     *x = distance * cos(azimuthRadians);
     *y = distance * sin(azimuthRadians);
 }

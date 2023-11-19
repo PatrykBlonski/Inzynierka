@@ -260,6 +260,20 @@ void panner_beamformer_process(const float X[], const float Y[], const float Z[]
     bData->status = PROC_STATUS_NOT_ONGOING;
 }
 
+
+
+float toRadians(float degrees)
+{
+    return degrees * (PI / 180.0);
+}
+
+void calculateCoordinates(float distance, float azimuth, float* x, float* y) //we get x and y
+{
+    float azimuthRadians = toRadians(azimuth);
+    *x = distance * cos(azimuthRadians);
+    *y = distance * sin(azimuthRadians);
+}
+
 void panner_process
 (
     void        *  const hPan,

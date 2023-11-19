@@ -149,6 +149,8 @@ public:
     void PluginProcessor::saveBufferToWav(AudioBuffer<float>& buffer);
     AudioBuffer<float> loadImpulseResponse(const String& filePath);
     void loadImpulseResponse();
+    void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum);
+
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;

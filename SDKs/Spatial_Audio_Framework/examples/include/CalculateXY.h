@@ -9,5 +9,5 @@
 */
 
 #pragma once
-double toRadians(double degrees);
-void calculateCoordinates(double distance, double azimuth, double* x, double* y); //we get x and y
+float toRadians(float degrees);
+void calculateCoordinates(float distance, float azimuth, float* x, float* y); //we get x and y

@@ -92,10 +92,12 @@ void PluginProcessor::endCalibration() {
     //convolution4.process(context3);
     //saveBufferToWav(recordingBuffer);
     panner_beamformer_process(ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(2), ImpulseBuffer.getNumSamples(), loudspeakerNumber, bhPan, hPan);
+    distanceCalculation(recordingBuffer, ImpulseBuffer, loudspeakerNumber);
     while (panner_getBeamStatus == 0);
     refreshWindow = true;
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
+        ImpulseBuffer.clear();
         std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
         juce::String juceStringPath(stdStringPath);
         ImpulseBuffer = loadImpulseResponse(juceStringPath);
@@ -103,7 +105,7 @@ void PluginProcessor::endCalibration() {
         timeElapsed = 0.0;
         frequency = startFrequency;
         currentRecordingPosition = 0;
-        ImpulseBuffer.clear();
+        recordingBuffer.clear();
         calibrating = true;
         isRecording = true;
     }
@@ -435,7 +437,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
 
     if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
         for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
-            // recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
          /*   recordingBuffer.copyFrom(channel - 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
             recordingBuffer.copyFrom(channel + 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
@@ -444,6 +446,89 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
         currentRecordingPosition += buffer.getNumSamples();
     }
 }
+
+void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum)
+{
+    // Check if buffers are valid and have the same number of samples
+    jassert(sweep.getNumSamples() == input.getNumSamples());
+    jassert(sweep.getNumChannels() > 0 && input.getNumChannels() > 0);
+
+    const int numOfSamples = sweep.getNumSamples();
+    const int fftSize = nextPowerOfTwo(numOfSamples); //finding next power of 2 for FFT calc
+    dsp::FFT fft((int)std::log2(fftSize));
+
+    // Allocate space for the FFT data
+    HeapBlock<float> sweepFFTData(fftSize * 2, true); // Initialize to zero
+    HeapBlock<float> inputFFTData(fftSize * 2, true); // Initialize to zero
+
+    // Copy input data to the fftData's real part
+    const float* sweepSamples = sweep.getReadPointer(0);
+    const float* inputSamples = input.getReadPointer(2);
+
+    // Prepare the data for FFT
+    for (int i = 0; i < numOfSamples; ++i)
+    {
+        sweepFFTData[i] = sweepSamples[i];
+        inputFFTData[i] = inputSamples[i];
+    }
+
+    // Perform the FFT in-place
+    fft.performFrequencyOnlyForwardTransform(sweepFFTData);
+    fft.performFrequencyOnlyForwardTransform(inputFFTData);
+
+    // Allocate space for the result of the division (transfer function)
+    HeapBlock<dsp::Complex<float>> transferFunctionFFTData(fftSize, true); // Initialize to zero
+
+    // Perform the division in the frequency domain with regularization
+    const float epsilon = 1e-3f; // Threshold to prevent division by very small numbers
+    for (int i = 0; i < fftSize; ++i)
+    {
+        dsp::Complex<float> sweepValue(sweepFFTData[i * 2], sweepFFTData[i * 2 + 1]);
+        dsp::Complex<float> inputValue(inputFFTData[i * 2], inputFFTData[i * 2 + 1]);
+
+        if (std::abs(sweepValue) > epsilon)
+        {
+            transferFunctionFFTData[i] = inputValue / sweepValue;
+        }
+        else
+        {
+            transferFunctionFFTData[i] = dsp::Complex<float>(0.0f, 0.0f); // Regularization
+        }
+    }
+
+    // Prepare buffer for inverse FFT result (time domain)
+    HeapBlock<float> estimatedIRData(fftSize * 2, true); // Initialize to zero
+
+    // Prepare data for inverse FFT
+    for (int i = 0; i < fftSize; ++i)
+    {
+        estimatedIRData[i * 2] = transferFunctionFFTData[i].real();
+        estimatedIRData[i * 2 + 1] = transferFunctionFFTData[i].imag();
+    }
+
+    // Perform the inverse FFT
+    fft.performRealOnlyInverseTransform(estimatedIRData);
+
+    // Find the peak in the impulse response to determine the time of arrival
+    float peakTime = 0.0f;
+    float maxVal = std::numeric_limits<float>::lowest();
+
+    for (int i = 1; i < fftSize - 1; ++i)
+    {
+        float val = estimatedIRData[i * 2]; // We only need the real part
+        if (val > maxVal)
+        {
+            maxVal = val; //finding peak Value
+            peakTime = (float)i / 48000.0f; //const sampling rate
+        }
+    }
+
+    // Calculate the distance using the time of arrival and the speed of sound
+    const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
+    float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+    panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+}
+
 
 void PluginProcessor::loadImpulseResponse()
 {

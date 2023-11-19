@@ -120,6 +120,9 @@ void panner_init(void* const hPan,
 void panner_initCodec(void* const hPan);
 float panner_beamform(const float X[], const float Y[], const float Z[], void* const bPan, int index, int num_samples);
 void panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, int loudNum, void* const bPan, void* const hPan);
+float toRadians(float degrees);
+void calculateCoordinates(float distance, float azimuth, float* x, float* y); //we get x and y
+
 
 /**
  * Pans the input signals/sources to the loudspeaker channels using VBAP [1],

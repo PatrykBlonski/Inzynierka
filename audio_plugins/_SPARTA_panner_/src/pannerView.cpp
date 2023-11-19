@@ -22,7 +22,6 @@
 //[/Headers]
 
 #include "pannerView.h"
-#include "CalculateXY.h"
 
 
 //[MiscUserDefs] You can add your own user definitions and misc code here...
@@ -255,8 +254,8 @@ void pannerView::refreshPanView()
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
     for(int ls=0; ls<NLoudspeakers; ls++){
         calculateCoordinates(panner_getLoudspeakerDist_deg(hPan, ls), panner_getLoudspeakerAzi_deg(hPan, ls), &x, &y);
-        LoudspeakerIcons[ls].setBounds(width - width*(x + 10.0f)/20.f - icon_size/2.0f,
-                                       height - height*(y + 10.0f)/20.0f - icon_size/2.0f,
+        LoudspeakerIcons[ls].setBounds(width - width*(11 - x)/22.f - icon_size/2.0f,
+                                       height - height*(11 + y)/22.0f - icon_size/2.0f,
                                        icon_size,
                                        icon_size);
     }

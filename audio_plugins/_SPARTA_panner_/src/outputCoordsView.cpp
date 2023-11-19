@@ -69,7 +69,7 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
      //   distLabels[i]->setValue(panner_getLoudspeakerAzi_deg(hPan, i));
       //  distLabels[i]->setlabelStyle(label::LinearHorizontal);
       //  distLabels[i]->setTextBoxStyle(label::TextBoxRight, true, 70, 20);
-        distLabels[i]->setText(String(panner_getLoudspeakerAzi_deg(hPan, i)), dontSendNotification);
+        distLabels[i]->setText(String(panner_getLoudspeakerDist_deg(hPan, i)), dontSendNotification);
         distLabels[i]->setBounds(45, 8 + i * sensorEdit_height, 86, 16);
      //   distLabels[i]->addListener(this);
 
@@ -237,7 +237,7 @@ void outputCoordsView::refreshCoords(){
     for( int i=0; i<maxNCH; i++){
        // aziLabels[i]->setRange (-360.0, 360.0, 0.1);
         
-        distLabels[i]->setText(String(5), dontSendNotification);
+        distLabels[i]->setText(String(panner_getLoudspeakerDist_deg(hPan, i)), dontSendNotification);
         distLabels[i]->setBounds(distLabels[i]->getText().contains("-") ? 40 : 45, 8 + i * sensorEdit_height, 86, 16);
 
       //  elevLabels[i]->setRange (-180.0, 180.0, 0.1);
