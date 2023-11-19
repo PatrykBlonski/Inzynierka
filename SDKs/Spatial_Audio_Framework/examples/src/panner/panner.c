@@ -231,9 +231,10 @@ float panner_beamform(const float X[], const float Y[], const float Z[], void* c
     return energy;
 }
 
-void panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, void * const bPan, void * const hPan)
+void panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, int loudNum, void * const bPan, void * const hPan)
 {
     Direction* bData = (Direction*)(bPan);
+    bData->status = PROC_STATUS_ONGOING;
     panner_data* pData = (panner_data*)(hPan);
     float maxEnergy = -1e9f;
     float bestTheta = 0.0f, bestPhi = 0.0f;
@@ -254,11 +255,9 @@ void panner_beamformer_process(const float X[], const float Y[], const float Z[]
     }
     bestTheta = (bestTheta * 180.0f / PI) < 0 ? (bestTheta * 180.0f / PI) + 360.0f : (bestTheta * 180.0f / PI);
     bestPhi = bestPhi * 180.0f / PI;
-    printf("Best direction:\n");
-  //  printf("Azimuth (theta) = %f degrees\n", bestTheta * 180.0f / PI);
-  //  printf("Elevation (phi) = %f degrees\n", bestPhi * 180.0f / PI);
-   // panner_setLoudspeakerAzi_deg(hPan, 0, bestTheta * 180.0f / PI);
-  //  panner_setLoudspeakerElev_deg(hPan, 0, bestPhi * 180.0f / PI);
+    panner_setLoudspeakerAzi_deg(hPan, loudNum, bestTheta);
+    panner_setLoudspeakerElev_deg(hPan, loudNum, bestPhi);
+    bData->status = PROC_STATUS_NOT_ONGOING;
 }
 
 void panner_process
@@ -635,6 +634,12 @@ CODEC_STATUS panner_getCodecStatus(void* const hPan)
 {
     panner_data *pData = (panner_data*)(hPan);
     return pData->codecStatus;
+}
+
+PROC_STATUS panner_getBeamStatus(void* const bPan)
+{
+    Direction* bData = (Direction*)(bPan);
+    return bData->status;
 }
 
 float panner_getProgressBar0_1(void* const hPan)

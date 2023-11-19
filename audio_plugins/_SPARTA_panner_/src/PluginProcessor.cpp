@@ -53,7 +53,7 @@ PluginProcessor::~PluginProcessor()
 
 void PluginProcessor::startCalibration() {
    // prepareToPlay(getSampleRate(), 240000);
-    std::string stdStringPath = "C:\\Users\\patry\\Desktop\\conv_signals_1.wav";
+    std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
     //std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
     juce::String juceStringPath(stdStringPath);
     ImpulseBuffer = loadImpulseResponse(juceStringPath);
@@ -68,6 +68,7 @@ void PluginProcessor::startCalibration() {
 
 void PluginProcessor::endCalibration() {
     isRecording = false;
+    calibrating = 0;
     //saveBufferToWav(recordingBuffer);
     //dsp::AudioBlock<float> block(recordingBuffer);
     //// Create an AudioBlock and ProcessContext for the current channel only
@@ -90,23 +91,21 @@ void PluginProcessor::endCalibration() {
     //// Perform the convolution
     //convolution4.process(context3);
     //saveBufferToWav(recordingBuffer);
-    panner_beamformer_process(ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(2), ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getNumSamples(), bhPan, hPan);
-    panner_beamformer_process(ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(2), ImpulseBuffer.getNumSamples(), bhPan, hPan);
-    panner_beamformer_process(ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(0), ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getNumSamples(), bhPan, hPan);
-    panner_beamformer_process(ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(0), ImpulseBuffer.getNumSamples(), bhPan, hPan);
-
+    panner_beamformer_process(ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(2), ImpulseBuffer.getNumSamples(), loudspeakerNumber, bhPan, hPan);
+    while (panner_getBeamStatus == 0);
+    refreshWindow = true;
     loudspeakerNumber++;
-    if (loudspeakerNumber >= panner_getNumLoudspeakers(hPan)) {
-        calibrating = 0;
-        isRecording = false;
-    }
-    else {
+    if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
+        std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
+        juce::String juceStringPath(stdStringPath);
+        ImpulseBuffer = loadImpulseResponse(juceStringPath);
         phase = 0.0;
         timeElapsed = 0.0;
         frequency = startFrequency;
         currentRecordingPosition = 0;
-        isRecording = false;
-
+        ImpulseBuffer.clear();
+        calibrating = true;
+        isRecording = true;
     }
 }
 
@@ -424,10 +423,10 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
         for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
             // recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel - 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+         /*   recordingBuffer.copyFrom(channel - 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
             recordingBuffer.copyFrom(channel + 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel + 2, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            recordingBuffer.copyFrom(channel + 2, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());*/
         }
         currentRecordingPosition += buffer.getNumSamples();
     }

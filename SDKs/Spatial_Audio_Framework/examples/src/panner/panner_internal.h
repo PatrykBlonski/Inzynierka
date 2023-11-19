@@ -144,6 +144,7 @@ typedef struct _beam {
     float cosTheta;
     float sinPhi;
     float cosPhi;
+    PROC_STATUS status;
 } Direction;
 
 #define PI 3.14159265358979323846f
