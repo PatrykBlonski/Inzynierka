@@ -127,7 +127,7 @@ typedef struct _panner
     float DTT;                      /**< Room coefficient [3] */
     float spread_deg;               /**< Source spread/MDAP [2] */
     int nLoudpkrs;                  /**< Current number of loudspeakers in the array */
-    float loudpkrs_dirs_deg[MAX_NUM_OUTPUTS][2]; /**< Current loudspeaker directions */
+    float loudpkrs_dirs_deg[MAX_NUM_OUTPUTS][3]; /**< Current loudspeaker directions */
     float yaw;                      /**< yaw (Euler) rotation angle, in degrees */
     float roll;                     /**< roll (Euler) rotation angle, in degrees */
     float pitch;                    /**< pitch (Euler) rotation angle, in degrees */
@@ -137,7 +137,19 @@ typedef struct _panner
     
 } panner_data;
      
+typedef struct _beam {
+    float theta;
+    float phi;
+    float sinTheta;
+    float cosTheta;
+    float sinPhi;
+    float cosPhi;
+    PROC_STATUS status;
+} Direction;
 
+#define PI 3.14159265358979323846f
+#define THETA_STEPS 60
+#define PHI_STEPS 45
 /* ========================================================================== */
 /*                             Internal Functions                             */
 /* ========================================================================== */

@@ -56,6 +56,8 @@
 
 #include "_common.h"
 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -80,14 +82,14 @@ extern "C" {
  *
  * @param[in] phPan (&) address of panner handle
  */
-void panner_create(void** const phPan);
+void panner_create(void** const phPan, void** const bhPan);
 
 /**
  * Destroys an instance of the panner
  *
  * @param[in] phPan (&) address of panner handle
  */
-void panner_destroy(void** const phPan);
+void panner_destroy(void** const phPan, void** const bhPan);
 
 /**
  * Initialises an instance of panner with default settings
@@ -116,6 +118,11 @@ void panner_init(void* const hPan,
  * @param[in] hPan panner handle
  */
 void panner_initCodec(void* const hPan);
+float panner_beamform(const float X[], const float Y[], const float Z[], void* const bPan, int index, int num_samples);
+void panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, int loudNum, void* const bPan, void* const hPan);
+float toRadians(float degrees);
+void calculateCoordinates(float distance, float azimuth, float* x, float* y); //we get x and y
+
 
 /**
  * Pans the input signals/sources to the loudspeaker channels using VBAP [1],
@@ -173,6 +180,8 @@ void panner_setLoudspeakerAzi_deg(void* const hPan, int index, float newAzi_deg)
 
 /** Sets the elevation of a specific loudspeaker index, in DEGREES */
 void panner_setLoudspeakerElev_deg(void* const hPan, int index, float newElev_deg);
+
+void panner_setLoudspeakerDist_deg(void* const hPan, int index, float newDist); //XXXX
 
 /** Sets the number of loudspeakers to pan to */
 void panner_setNumLoudspeakers(void* const hPan, int new_nLoudspeakers);
@@ -248,6 +257,9 @@ CODEC_STATUS panner_getCodecStatus(void* const hPan);
  *  - 0: intialisation/processing has started
  *  - 1: intialisation/processing has ended
  */
+
+PROC_STATUS panner_getBeamStatus(void* const bPan);
+
 float panner_getProgressBar0_1(void* const hPan);
 
 /**
@@ -275,6 +287,8 @@ float panner_getLoudspeakerAzi_deg(void* const hPan, int index);
 
 /** Returns the loudspeaker elevation for a given index, in DEGREES */
 float panner_getLoudspeakerElev_deg(void* const hPan, int index);
+
+float panner_getLoudspeakerDist_deg(void* const hPan, int index); //distance from mic
 
 /** Returns the number of loudspeakers in the current layout */
 int panner_getNumLoudspeakers(void* const hPan);

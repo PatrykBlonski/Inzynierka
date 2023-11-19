@@ -1,3 +1,5 @@
+ippsCos_32f_A24
+ippsSin_32f_A24
 ippsFFTGetSize_R_32f
 ippsDFTGetSize_R_32f
 ippsFFTGetSize_C_32f

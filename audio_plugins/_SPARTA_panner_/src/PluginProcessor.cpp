@@ -39,16 +39,24 @@ PluginProcessor::PluginProcessor() :
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
     refreshWindow = true;
-    panner_create(&hPan);
+    panner_create(&hPan, &bhPan);
+    recordingBuffer.setSize(4, 48000 * 5);
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
 PluginProcessor::~PluginProcessor()
 {
-	panner_destroy(&hPan);
+	panner_destroy(&hPan, &bhPan);
 }
 
+
+
 void PluginProcessor::startCalibration() {
+   // prepareToPlay(getSampleRate(), 240000);
+    std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
+    //std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
+    juce::String juceStringPath(stdStringPath);
+    ImpulseBuffer = loadImpulseResponse(juceStringPath);
     calibrating = true;
     phase = 0.0;
     timeElapsed = 0.0;
@@ -59,16 +67,47 @@ void PluginProcessor::startCalibration() {
 }
 
 void PluginProcessor::endCalibration() {
+    isRecording = false;
+    calibrating = 0;
+    //saveBufferToWav(recordingBuffer);
+    //dsp::AudioBlock<float> block(recordingBuffer);
+    //// Create an AudioBlock and ProcessContext for the current channel only
+    //dsp::AudioBlock<float> channelBlock = block.getSingleChannelBlock(0);
+    //dsp::ProcessContextReplacing<float> context(channelBlock);
+    //// Perform the convolution
+    //convolution1.process(context);
+    //channelBlock = block.getSingleChannelBlock(1);
+    //dsp::ProcessContextReplacing<float> context1(channelBlock);
+    //// Perform the convolution
+    //convolution2.process(context1);
+
+    //channelBlock = block.getSingleChannelBlock(2);
+    //dsp::ProcessContextReplacing<float> context2(channelBlock);
+    //// Perform the convolution
+    //convolution3.process(context2);
+
+    //channelBlock = block.getSingleChannelBlock(3);
+    //dsp::ProcessContextReplacing<float> context3(channelBlock);
+    //// Perform the convolution
+    //convolution4.process(context3);
+    //saveBufferToWav(recordingBuffer);
+    panner_beamformer_process(ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(2), ImpulseBuffer.getNumSamples(), loudspeakerNumber, bhPan, hPan);
+    distanceCalculation(recordingBuffer, ImpulseBuffer, loudspeakerNumber);
+    while (panner_getBeamStatus == 0);
+    refreshWindow = true;
     loudspeakerNumber++;
-    if (loudspeakerNumber >= panner_getNumLoudspeakers(hPan)) {
-        calibrating = 0;
-        isRecording = false;
-    }
-    else {
+    if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
+        ImpulseBuffer.clear();
+        std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
+        juce::String juceStringPath(stdStringPath);
+        ImpulseBuffer = loadImpulseResponse(juceStringPath);
         phase = 0.0;
         timeElapsed = 0.0;
         frequency = startFrequency;
         currentRecordingPosition = 0;
+        recordingBuffer.clear();
+        calibrating = true;
+        isRecording = true;
     }
 }
 
@@ -106,20 +145,33 @@ void PluginProcessor::setParameter (int index, float newValue)
         }
     }
     /* loudspeaker direction parameters */
-    else{
-        index -= (k_NumOfParameters+2*MAX_NUM_INPUTS);
+    else {
+        index -= (k_NumOfParameters + 2 * MAX_NUM_INPUTS);
         float newValueScaled;
-        if (!(index % 2)){
-            newValueScaled = (newValue - 0.5f)*360.0f;
-            if (newValueScaled != panner_getLoudspeakerAzi_deg(hPan, index/2)){
-                panner_setLoudspeakerAzi_deg(hPan, index/2, newValueScaled);
+        int loudspeakerIndex = index / 3;
+
+        if (index % 3 == 0) {
+            // Azimuth
+            newValueScaled = (newValue - 0.5f) * 360.0f;
+            if (newValueScaled != panner_getLoudspeakerAzi_deg(hPan, loudspeakerIndex)) {
+                panner_setLoudspeakerAzi_deg(hPan, loudspeakerIndex, newValueScaled);
                 refreshWindow = true;
             }
         }
-        else{
-            newValueScaled = (newValue - 0.5f)*180.0f;
-            if (newValueScaled != panner_getLoudspeakerElev_deg(hPan, index/2)){
-                panner_setLoudspeakerElev_deg(hPan, index/2, newValueScaled);
+        else if (index % 3 == 1) {
+            // Elevation
+            newValueScaled = (newValue - 0.5f) * 180.0f;
+            if (newValueScaled != panner_getLoudspeakerElev_deg(hPan, loudspeakerIndex)) {
+                panner_setLoudspeakerElev_deg(hPan, loudspeakerIndex, newValueScaled);
+                refreshWindow = true;
+            }
+        }
+        else {
+            // Distance
+            // Assuming a maximum distance of MAX_DISTANCE
+            newValueScaled = newValue * 10.0f;
+            if (newValueScaled != panner_getLoudspeakerDist_deg(hPan, loudspeakerIndex)) {
+                panner_setLoudspeakerDist_deg(hPan, loudspeakerIndex, newValueScaled);
                 refreshWindow = true;
             }
         }
@@ -296,16 +348,32 @@ void PluginProcessor::changeProgramName (int /*index*/, const String& /*newName*
 {
 }
 
-void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-{
-    nHostBlockSize = samplesPerBlock;
-    nNumInputs =  getTotalNumInputChannels();
-    nNumOutputs = getTotalNumOutputChannels();
-    nSampleRate = (int)(sampleRate + 0.5);
-    isPlaying = false;
+//void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+//{
+//    nHostBlockSize = samplesPerBlock;
+//    nNumInputs =  getTotalNumInputChannels();
+//    nNumOutputs = getTotalNumOutputChannels();
+//    nSampleRate = (int)(sampleRate + 0.5);
+//    isPlaying = false;
+//
+//	panner_init(hPan, nSampleRate);
+//    AudioProcessor::setLatencySamples(panner_getProcessingDelay());
+//}
 
-	panner_init(hPan, nSampleRate);
-    AudioProcessor::setLatencySamples(panner_getProcessingDelay());
+void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+{
+    dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = 1; // Each convolution instance is mono
+
+    // Prepare each convolution instance
+    convolution1.prepare(spec);
+    convolution2.prepare(spec);
+    convolution3.prepare(spec);
+    convolution4.prepare(spec);
+
+    loadImpulseResponse();
 }
 
 void PluginProcessor::releaseResources()
@@ -351,7 +419,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     const double sampleRate = getSampleRate();
     const double deltaT = 1.0 / sampleRate;  // Time increment per sample
     int numberOfInputs = panner_getNumSources(hPan);
-    recordingBuffer.setSize(numberOfInputs, 48000 * 5);
+
 
     // Clear any unused channels
     for (int i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
@@ -359,22 +427,173 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     }
 
 
-
     if (calibrating) {
+       // prepareToPlay(sampleRate, numSamples);
+        /*if (buffer.getNumSamples() != 0 && buffer.getNumChannels() != 0) {
+            ImpulseBuffer = loadImpulseResponse("C:/Users/patry/Desktop/impulse_responses/impulse_responses");
+        }*/
         generateSine(deltaT, buffer);
     }
 
     if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
-        for (int channel = 0; channel < numberOfInputs; ++channel) {
+        for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
+             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+         /*   recordingBuffer.copyFrom(channel - 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            recordingBuffer.copyFrom(channel + 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
+            recordingBuffer.copyFrom(channel + 2, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());*/
         }
         currentRecordingPosition += buffer.getNumSamples();
     }
 }
 
-void PluginProcessor::saveBufferToWav()
+void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum)
+{
+    // Check if buffers are valid and have the same number of samples
+    jassert(sweep.getNumSamples() == input.getNumSamples());
+    jassert(sweep.getNumChannels() > 0 && input.getNumChannels() > 0);
+
+    const int numOfSamples = sweep.getNumSamples();
+    const int fftSize = nextPowerOfTwo(numOfSamples); //finding next power of 2 for FFT calc
+    dsp::FFT fft((int)std::log2(fftSize));
+
+    // Allocate space for the FFT data
+    HeapBlock<float> sweepFFTData(fftSize * 2, true); // Initialize to zero
+    HeapBlock<float> inputFFTData(fftSize * 2, true); // Initialize to zero
+
+    // Copy input data to the fftData's real part
+    const float* sweepSamples = sweep.getReadPointer(0);
+    const float* inputSamples = input.getReadPointer(2);
+
+    // Prepare the data for FFT
+    for (int i = 0; i < numOfSamples; ++i)
+    {
+        sweepFFTData[i] = sweepSamples[i];
+        inputFFTData[i] = inputSamples[i];
+    }
+
+    // Perform the FFT in-place
+    fft.performFrequencyOnlyForwardTransform(sweepFFTData);
+    fft.performFrequencyOnlyForwardTransform(inputFFTData);
+
+    // Allocate space for the result of the division (transfer function)
+    HeapBlock<dsp::Complex<float>> transferFunctionFFTData(fftSize, true); // Initialize to zero
+
+    // Perform the division in the frequency domain with regularization
+    const float epsilon = 1e-3f; // Threshold to prevent division by very small numbers
+    for (int i = 0; i < fftSize; ++i)
+    {
+        dsp::Complex<float> sweepValue(sweepFFTData[i * 2], sweepFFTData[i * 2 + 1]);
+        dsp::Complex<float> inputValue(inputFFTData[i * 2], inputFFTData[i * 2 + 1]);
+
+        if (std::abs(sweepValue) > epsilon)
+        {
+            transferFunctionFFTData[i] = inputValue / sweepValue;
+        }
+        else
+        {
+            transferFunctionFFTData[i] = dsp::Complex<float>(0.0f, 0.0f); // Regularization
+        }
+    }
+
+    // Prepare buffer for inverse FFT result (time domain)
+    HeapBlock<float> estimatedIRData(fftSize * 2, true); // Initialize to zero
+
+    // Prepare data for inverse FFT
+    for (int i = 0; i < fftSize; ++i)
+    {
+        estimatedIRData[i * 2] = transferFunctionFFTData[i].real();
+        estimatedIRData[i * 2 + 1] = transferFunctionFFTData[i].imag();
+    }
+
+    // Perform the inverse FFT
+    fft.performRealOnlyInverseTransform(estimatedIRData);
+
+    // Find the peak in the impulse response to determine the time of arrival
+    float peakTime = 0.0f;
+    float maxVal = std::numeric_limits<float>::lowest();
+
+    for (int i = 1; i < fftSize - 1; ++i)
+    {
+        float val = estimatedIRData[i * 2]; // We only need the real part
+        if (val > maxVal)
+        {
+            maxVal = val; //finding peak Value
+            peakTime = (float)i / 48000.0f; //const sampling rate
+        }
+    }
+
+    // Calculate the distance using the time of arrival and the speed of sound
+    const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
+    float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+    panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+}
+
+
+void PluginProcessor::loadImpulseResponse()
+{
+    // Assuming you have a method to load an AudioBuffer with your IR...
+    std::string stdStringPath = "C:\\Users\\patry\\Documents\\impulse_response_5.wav";
+    //std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
+    juce::String juceStringPath(stdStringPath);
+    AudioBuffer<float> irBuffer = loadImpulseResponse(juceStringPath);
+    saveBufferToWav(irBuffer);
+    // Load the impulse response for each channel into each convolution instance
+    if (irBuffer.getNumChannels() == 4)
+    {
+        // You should create an AudioBuffer for each channel
+        AudioBuffer<float> singleChannelIR1(1, irBuffer.getNumSamples());
+        AudioBuffer<float> singleChannelIR2(1, irBuffer.getNumSamples());
+        AudioBuffer<float> singleChannelIR3(1, irBuffer.getNumSamples());
+        AudioBuffer<float> singleChannelIR4(1, irBuffer.getNumSamples());
+        singleChannelIR1.copyFrom(0, 0, irBuffer, 0, 0, irBuffer.getNumSamples());
+        singleChannelIR2.copyFrom(0, 0, irBuffer, 1, 0, irBuffer.getNumSamples());
+        singleChannelIR3.copyFrom(0, 0, irBuffer, 2, 0, irBuffer.getNumSamples());
+        singleChannelIR4.copyFrom(0, 0, irBuffer, 3, 0, irBuffer.getNumSamples());
+        // Load the impulse response into the convolution object
+        convolution1.loadImpulseResponse(
+            std::move(singleChannelIR1),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+
+        convolution2.loadImpulseResponse(
+            std::move(singleChannelIR2),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+
+        convolution3.loadImpulseResponse(
+            std::move(singleChannelIR3),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+
+        convolution4.loadImpulseResponse(
+            std::move(singleChannelIR4),
+            getSampleRate(),
+            dsp::Convolution::Stereo::no,
+            dsp::Convolution::Trim::no,
+            dsp::Convolution::Normalise::yes
+        );
+        // ... Repeat for convolution2, convolution3, convolution4 with appropriate channels
+    }
+    else
+    {
+        DBG("The impulse response buffer does not have enough channels.");
+    }
+}
+
+void PluginProcessor::saveBufferToWav(AudioBuffer<float> &buffer)
 {
     // File path
+
     juce::File outputFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("recorded_audio.wav");
 
     // Create an AudioFormatManager and register the WAV format
@@ -393,8 +612,8 @@ void PluginProcessor::saveBufferToWav()
     std::unique_ptr<juce::AudioFormatWriter> writer(wavFormat->createWriterFor(
         new juce::FileOutputStream(outputFile),
         getSampleRate(),
-        recordingBuffer.getNumChannels(),
-        16,  // Bit depth, e.g., 16 bits
+        buffer.getNumChannels(),
+        32,  // Bit depth, e.g., 16 bits
         {},  // No metadata
         0    // Use the default quality
     ));
@@ -402,9 +621,47 @@ void PluginProcessor::saveBufferToWav()
     if (writer.get() != nullptr)
     {
         // Write the entire buffer to the file
-        writer->writeFromAudioSampleBuffer(recordingBuffer, 0, recordingBuffer.getNumSamples());
+        writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
     }
 }
+
+AudioBuffer<float> PluginProcessor::loadImpulseResponse(const String& filePath)
+{
+    AudioBuffer<float> buffer;
+
+    File file(filePath);
+    if (!file.existsAsFile())
+    {
+        DBG("File does not exist: " << filePath);
+        return buffer;
+    }
+
+    AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    auto variable = formatManager.createReaderFor(file);
+
+    std::unique_ptr<AudioFormatReader> reader(variable);
+    if (reader)
+    {
+        if (reader->usesFloatingPointData) // Check if the reader can handle floating-point data
+        {
+            buffer.setSize((int)reader->numChannels, (int)reader->lengthInSamples);
+            reader->read(&buffer, 0, (int)reader->lengthInSamples, 0, true, true);
+        }
+        else
+        {
+            DBG("The file is not in a floating-point format.");
+        }
+    }
+    else
+    {
+        DBG("Failed to create audio format reader for file: " << filePath);
+    }
+
+    return buffer;
+}
+
+
 
 //==============================================================================
 bool PluginProcessor::hasEditor() const
@@ -567,6 +824,7 @@ void PluginProcessor::loadConfiguration (const File& configFile, int srcOrLs)
                 for (ValueTree::Iterator it = elements.begin() ; it != elements.end(); ++it){
                     if ( !((*it).getProperty("Imaginary"))){
                         panner_setLoudspeakerAzi_deg(hPan, channelIDs[el_idx]-1, (*it).getProperty("Azimuth"));
+                        panner_setLoudspeakerDist_deg(hPan, channelIDs[el_idx] - 1, (*it).getProperty("Distance")); //XXXX
                         panner_setLoudspeakerElev_deg(hPan, channelIDs[el_idx]-1, (*it).getProperty("Elevation"));
                         el_idx++;
                     }

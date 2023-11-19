@@ -16,14 +16,14 @@
               enableIAA="0" companyCopyright="Aalto" pluginFormats="buildVST"
               jucerFormatVersion="1">
   <MAINGROUP id="imnfnp" name="sparta_panner">
+    <FILE id="to1Y1X" name="inputCoordsView.cpp" compile="1" resource="0"
+          file="src/inputCoordsView.cpp"/>
+    <FILE id="NbcStW" name="inputCoordsView.h" compile="0" resource="0"
+          file="src/inputCoordsView.h"/>
     <FILE id="yE7YLl" name="ConfigurationHelper.h" compile="0" resource="0"
           file="../resources/ConfigurationHelper.h"/>
     <FILE id="wrlKCk" name="SPARTALookAndFeel.h" compile="0" resource="0"
           file="../resources/SPARTALookAndFeel.h"/>
-    <FILE id="dPVCX6" name="inputCoordsView.cpp" compile="1" resource="0"
-          file="src/inputCoordsView.cpp"/>
-    <FILE id="pZOHBu" name="inputCoordsView.h" compile="0" resource="0"
-          file="src/inputCoordsView.h"/>
     <FILE id="g0Ifvo" name="outputCoordsView.cpp" compile="1" resource="0"
           file="src/outputCoordsView.cpp"/>
     <FILE id="qYtRjc" name="outputCoordsView.h" compile="0" resource="0"
@@ -40,11 +40,13 @@
     <GROUP id="{FDC1C61B-0C6B-8810-F6D8-B8829BB68731}" name="panner">
       <GROUP id="{8634C764-094F-B45E-E303-922184BA3B81}" name="Header Files">
         <FILE id="gbaFP1" name="_common.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/_common.h"/>
+        <FILE id="CXhOoA" name="CalculateXY.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/CalculateXY.h"/>
         <FILE id="PKqa1d" name="panner.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/panner.h"/>
         <FILE id="opkEJw" name="panner_internal.h" compile="0" resource="0"
               file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner_internal.h"/>
       </GROUP>
       <GROUP id="{1F4BBFC4-CF29-237B-2C91-E6ECE37B66E3}" name="Source Files">
+        <FILE id="XgLkze" name="CalculateXY.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/CalculateXY.c"/>
         <FILE id="wgzs9p" name="panner.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner.c"/>
         <FILE id="uKfUHL" name="panner_internal.c" compile="1" resource="0"
               file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner_internal.c"/>
@@ -292,6 +294,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </VS2017>
     <XCODE_MAC targetFolder="make/MacOSX/Xcode/" vstFolder="../../../SDKs/VST3 SDK"
@@ -323,6 +326,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="make/LinuxMakefile" extraLinkerFlags="-L/usr/local/lib -lsaf_mkl_custom_lp64 -lsaf_ipp_custom&#10;-Wl,-rpath,/usr/local/lib"
@@ -347,6 +351,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
     <LINUX_MAKE targetFolder="make/LinuxMakefileRaspberryPI" extraDefs="SAF_USE_OPEN_BLAS_AND_LAPACKE"
@@ -369,6 +374,7 @@
         <MODULEPATH id="juce_audio_formats" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_devices" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_audio_basics" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
     <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="SAF_USE_INTEL_MKL_LP64&#10;SAF_USE_INTEL_IPP"
@@ -393,6 +399,7 @@
         <MODULEPATH id="juce_gui_basics" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_gui_extra" path="../../SDKs/JUCE/modules/"/>
         <MODULEPATH id="juce_opengl" path="../../SDKs/JUCE/modules/"/>
+        <MODULEPATH id="juce_dsp" path="../../SDKs/JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>
@@ -405,6 +412,7 @@
     <MODULES id="juce_core" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_cryptography" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_data_structures" showAllCode="1" useLocalCopy="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULES id="juce_events" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_graphics" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_gui_basics" showAllCode="1" useLocalCopy="0"/>

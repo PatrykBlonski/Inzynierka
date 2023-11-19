@@ -42,12 +42,51 @@
  */
  
 #include "panner_internal.h"
-
 void panner_create
 (
-    void ** const phPan
+    void ** const phPan,
+    void ** const bhPan
 )
 {
+    Direction* bData = (Direction*)malloc1d(360 * 180 * sizeof(Direction));
+    *bhPan = (void*)bData;
+
+    //float thetas[360 * 180];
+    //float phis[360 * 180];
+
+    for (int ti = 0; ti < 360; ti++) {
+        for (int pi = -90; pi < 90; pi++) {
+            int index = (ti * 180) + (pi + 90); // Correcting the index formula
+            bData[index].theta = (float)ti * (2.0f * PI / 360.0f);
+            bData[index].phi = (float)pi * (PI / 180.0f);
+        }
+    }
+
+    // Compute sin and cos for each element
+    for (int i = 0; i < 360 * 180; i++) {
+        bData[i].sinTheta = sinf(bData[i].theta);
+        bData[i].cosTheta = cosf(bData[i].theta);
+        bData[i].sinPhi = sinf(bData[i].phi);
+        bData[i].cosPhi = cosf(bData[i].phi);
+    }
+
+    //for (int ti = 0; ti < 360; ti++) {
+    //    for (int pi = -90; pi < 90; pi++) {
+    //        int index = ti * 180 + (90 + pi);
+    //        bData[index].theta = (float)ti * 2.0f * PI / 360.0f;
+    //        bData[index].phi = (float)pi * PI / 180.0f;
+    //        thetas[index] = bData[index].theta;
+    //        phis[index] = bData[index].phi;
+    //    }
+    //}
+
+    //// Compute sin and cos using IPP
+    //ippsSin_32f_A24(thetas, &bData->sinTheta, 360 * 180);
+    //ippsCos_32f_A24(thetas, &bData->cosTheta, 360 * 180);
+    //ippsSin_32f_A24(phis, &bData->sinPhi, 360 * 180);
+    //ippsCos_32f_A24(phis, &bData->cosPhi, 360 * 180);
+
+
     panner_data* pData = (panner_data*)malloc1d(sizeof(panner_data));
     *phPan = (void*)pData;
     int ch, dummy;
@@ -88,10 +127,12 @@ void panner_create
 
 void panner_destroy
 (
-    void ** const phPan
+    void ** const phPan,
+    void ** const bhPan
 )
 {
-    panner_data *pData = (panner_data*)(*phPan);
+    panner_data* pData = (panner_data*)(*phPan);
+    Direction *bData = (Direction*)(*bhPan);
 
     if (pData != NULL) {
         /* not safe to free memory during intialisation/processing loop */
@@ -112,6 +153,9 @@ void panner_destroy
         
         free(pData);
         pData = NULL;
+
+        free(bData);
+        bData = NULL;
     }
 }
 
@@ -168,6 +212,66 @@ void panner_initCodec
     pData->progressBar0_1 = 1.0f;
     pData->codecStatus = CODEC_STATUS_INITIALISED;
     
+}
+
+float panner_beamform(const float X[], const float Y[], const float Z[], void* const bPan, int index, int num_samples) {
+    Direction* bData = (Direction*)(bPan);
+
+    float energy = 0.0f;
+    float ux = bData[index].cosPhi * bData[index].cosTheta;
+    float uy = bData[index].cosPhi * bData[index].sinTheta;
+    float uz = bData[index].sinPhi;
+    for (int i = 0; i < num_samples; i++) {
+        float sample_energy = ux * X[i] + uy * Y[i] + uz * Z[i];
+        energy += sample_energy * sample_energy; // Assuming energy is sum of squared sample energies
+    }
+    if (energy == INFINITE || energy == INFINITY) {
+        printf("chuj");
+    }
+    return energy;
+}
+
+void panner_beamformer_process(const float X[], const float Y[], const float Z[], int numSamples, int loudNum, void * const bPan, void * const hPan)
+{
+    Direction* bData = (Direction*)(bPan);
+    bData->status = PROC_STATUS_ONGOING;
+    panner_data* pData = (panner_data*)(hPan);
+    float maxEnergy = -1e9f;
+    float bestTheta = 0.0f, bestPhi = 0.0f;
+
+//#pragma omp parallel for reduction(max:maxEnergy)
+    for (int i = 0; i < 360*180; i++) {
+        float energy = panner_beamform(X, Y, Z, bPan, i, numSamples);
+        if (energy > maxEnergy) {
+//#pragma omp critical
+            {
+                if (energy > maxEnergy) {
+                    maxEnergy = energy;
+                    bestTheta = bData[i].theta;
+                    bestPhi = bData[i].phi;
+                }
+            }
+        }
+    }
+    bestTheta = (bestTheta * 180.0f / PI) < 0 ? (bestTheta * 180.0f / PI) + 360.0f : (bestTheta * 180.0f / PI);
+    bestPhi = bestPhi * 180.0f / PI;
+    panner_setLoudspeakerAzi_deg(hPan, loudNum, bestTheta);
+    panner_setLoudspeakerElev_deg(hPan, loudNum, bestPhi);
+    bData->status = PROC_STATUS_NOT_ONGOING;
+}
+
+
+
+float toRadians(float degrees)
+{
+    return degrees * (PI / 180.0);
+}
+
+void calculateCoordinates(float distance, float azimuth, float* x, float* y) //we get x and y
+{
+    float azimuthRadians = toRadians(azimuth);
+    *x = distance * cos(azimuthRadians);
+    *y = distance * sin(azimuthRadians);
 }
 
 void panner_process
@@ -345,10 +449,10 @@ void panner_refreshSettings(void* const hPan)
 void panner_setSourceAzi_deg(void* const hPan, int index, float newAzi_deg)
 {
     panner_data *pData = (panner_data*)(hPan);
-    if(newAzi_deg>180.0f)
-        newAzi_deg = -360.0f + newAzi_deg;
-    newAzi_deg = SAF_MAX(newAzi_deg, -180.0f);
-    newAzi_deg = SAF_MIN(newAzi_deg, 180.0f);
+   // if(newAzi_deg>180.0f)
+   //     newAzi_deg = -360.0f + newAzi_deg;
+    newAzi_deg = SAF_MAX(newAzi_deg, 0.0f);
+    newAzi_deg = SAF_MIN(newAzi_deg, 360.0f);
     if(pData->src_dirs_deg[index][0] != newAzi_deg){
         pData->src_dirs_deg[index][0] = newAzi_deg;
         pData->recalc_gainsFLAG[index] = 1;
@@ -387,10 +491,10 @@ void panner_setLoudspeakerAzi_deg(void* const hPan, int index, float newAzi_deg)
 {
     panner_data *pData = (panner_data*)(hPan);
     int ch;
-    if(newAzi_deg>180.0f)
-        newAzi_deg = -360.0f + newAzi_deg;
-    newAzi_deg = SAF_MAX(newAzi_deg, -180.0f);
-    newAzi_deg = SAF_MIN(newAzi_deg, 180.0f);
+   // if(newAzi_deg>180.0f)
+  //      newAzi_deg = -360.0f + newAzi_deg;
+    newAzi_deg = SAF_MAX(newAzi_deg, 0.0f);
+    newAzi_deg = SAF_MIN(newAzi_deg, 360.0f);
     if(pData->loudpkrs_dirs_deg[index][0] != newAzi_deg){
         pData->loudpkrs_dirs_deg[index][0] = newAzi_deg;
         pData->reInitGainTables=1;
@@ -414,6 +518,24 @@ void panner_setLoudspeakerElev_deg(void* const hPan, int index, float newElev_de
             pData->recalc_gainsFLAG[ch] = 1;
         pData->recalc_M_rotFLAG = 1;
         panner_setCodecStatus(hPan, CODEC_STATUS_NOT_INITIALISED);
+    }
+}
+
+void panner_setLoudspeakerDist_deg(void* const hPan, int index, float newDist) //XXXX
+{
+    panner_data* pData = (panner_data*)(hPan);
+    int ch;
+    newDist = SAF_MAX(newDist, 0.0f); //min distance
+    newDist = SAF_MIN(newDist, 10.0f); //max distance
+
+    if (pData->loudpkrs_dirs_deg[index][2] != newDist) { //not sure if index is 2?
+        pData->loudpkrs_dirs_deg[index][2] = newDist;
+        pData->reInitGainTables = 1;
+
+        for (ch = 0; ch < MAX_NUM_INPUTS; ch++)
+            pData->recalc_gainsFLAG[ch] = 1;
+
+        pData->recalc_M_rotFLAG = 1;
     }
 }
 
@@ -546,6 +668,12 @@ CODEC_STATUS panner_getCodecStatus(void* const hPan)
     return pData->codecStatus;
 }
 
+PROC_STATUS panner_getBeamStatus(void* const bPan)
+{
+    Direction* bData = (Direction*)(bPan);
+    return bData->status;
+}
+
 float panner_getProgressBar0_1(void* const hPan)
 {
     panner_data *pData = (panner_data*)(hPan);
@@ -591,6 +719,12 @@ float panner_getLoudspeakerElev_deg(void* const hPan, int index)
 {
     panner_data *pData = (panner_data*)(hPan);
     return pData->loudpkrs_dirs_deg[index][1];
+}
+
+float panner_getLoudspeakerDist_deg(void* const hPan, int index)
+{
+    panner_data* pData = (panner_data*)(hPan);
+	return pData->loudpkrs_dirs_deg[index][2];
 }
 
 int panner_getNumLoudspeakers(void* const hPan)

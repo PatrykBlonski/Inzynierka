@@ -58,6 +58,7 @@ class PluginProcessor  : public AudioProcessor,
 {
 public:
     AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
+    AudioBuffer<float> ImpulseBuffer;
     //AudioProcessorValueTreeState parameters;
     /* Get functions */
     void* getFXHandle() { return hPan; }
@@ -89,6 +90,7 @@ public:
     
 private:
     void* hPan;           /* panner handle */
+    void* bhPan;          /* beamform panner handle */
     int nNumInputs;       /* current number of input channels */
     int nNumOutputs;      /* current number of output channels */
     int nSampleRate;      /* current host sample rate */
@@ -108,6 +110,10 @@ private:
     bool isRecording = false;
     int currentRecordingPosition = 0;
     int loudspeakerNumber = 0;
+    dsp::Convolution convolution1;
+    dsp::Convolution convolution2;
+    dsp::Convolution convolution3;
+    dsp::Convolution convolution4;
 
 
     void timerCallback(int timerID) override
@@ -140,7 +146,11 @@ public:
     void PluginProcessor::startCalibration();
     void PluginProcessor::endCalibration();
     void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer);
-    void PluginProcessor::saveBufferToWav();
+    void PluginProcessor::saveBufferToWav(AudioBuffer<float>& buffer);
+    AudioBuffer<float> loadImpulseResponse(const String& filePath);
+    void loadImpulseResponse();
+    void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum);
+
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
