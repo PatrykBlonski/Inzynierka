@@ -22,6 +22,7 @@
 //[/Headers]
 
 #include "pannerView.h"
+#include "CalculateXY.h"
 
 
 //[MiscUserDefs] You can add your own user definitions and misc code here...
@@ -241,6 +242,9 @@ void pannerView::mouseUp (const juce::MouseEvent& e)
 //[MiscUserCode] You can add your own definitions of your custom methods or any other code here...
 void pannerView::refreshPanView()
 {
+    float x;
+    float y;
+
     for(int src=0; src<MAX_NUM_INPUTS; src++){
         SourceIcons[src].setBounds(width - width*(panner_getSourceAzi_deg(hPan, src) + 180.0f)/360.f - icon_size/2.0f,
                                    height - height*(panner_getSourceElev_deg(hPan, src) + 90.0f)/180.0f - icon_size/2.0f,
@@ -250,8 +254,9 @@ void pannerView::refreshPanView()
     NSources = panner_getNumSources(hPan);
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
     for(int ls=0; ls<NLoudspeakers; ls++){
-        LoudspeakerIcons[ls].setBounds(width - width*(panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f)/360.f - icon_size/2.0f,
-                                       height - height*(panner_getLoudspeakerElev_deg(hPan, ls)+90.0f)/180.0f - icon_size/2.0f,
+        calculateCoordinates(panner_getLoudspeakerDist_deg(hPan, ls), panner_getLoudspeakerAzi_deg(hPan, ls), &x, &y);
+        LoudspeakerIcons[ls].setBounds(width - width*(x + 10.0f)/20.f - icon_size/2.0f,
+                                       height - height*(y + 10.0f)/20.0f - icon_size/2.0f,
                                        icon_size,
                                        icon_size);
     }

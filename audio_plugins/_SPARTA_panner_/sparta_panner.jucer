@@ -40,11 +40,13 @@
     <GROUP id="{FDC1C61B-0C6B-8810-F6D8-B8829BB68731}" name="panner">
       <GROUP id="{8634C764-094F-B45E-E303-922184BA3B81}" name="Header Files">
         <FILE id="gbaFP1" name="_common.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/_common.h"/>
+        <FILE id="CXhOoA" name="CalculateXY.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/CalculateXY.h"/>
         <FILE id="PKqa1d" name="panner.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/panner.h"/>
         <FILE id="opkEJw" name="panner_internal.h" compile="0" resource="0"
               file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner_internal.h"/>
       </GROUP>
       <GROUP id="{1F4BBFC4-CF29-237B-2C91-E6ECE37B66E3}" name="Source Files">
+        <FILE id="XgLkze" name="CalculateXY.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/CalculateXY.c"/>
         <FILE id="wgzs9p" name="panner.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner.c"/>
         <FILE id="uKfUHL" name="panner_internal.c" compile="1" resource="0"
               file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner_internal.c"/>
