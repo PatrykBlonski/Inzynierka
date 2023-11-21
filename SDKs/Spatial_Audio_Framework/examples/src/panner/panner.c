@@ -493,6 +493,7 @@ void panner_setLoudspeakerAzi_deg(void* const hPan, int index, float newAzi_deg)
     int ch;
    // if(newAzi_deg>180.0f)
   //      newAzi_deg = -360.0f + newAzi_deg;
+    newAzi_deg = roundf(newAzi_deg * 10.0f) / 10.0f;
     newAzi_deg = SAF_MAX(newAzi_deg, 0.0f);
     newAzi_deg = SAF_MIN(newAzi_deg, 360.0f);
     if(pData->loudpkrs_dirs_deg[index][0] != newAzi_deg){
@@ -509,6 +510,7 @@ void panner_setLoudspeakerElev_deg(void* const hPan, int index, float newElev_de
 {
     panner_data *pData = (panner_data*)(hPan);
     int ch;
+    newElev_deg = roundf(newElev_deg * 10.0f) / 10.0f; //chanign to 0.0 XXXX
     newElev_deg = SAF_MAX(newElev_deg, -90.0f);
     newElev_deg = SAF_MIN(newElev_deg, 90.0f);
     if(pData->loudpkrs_dirs_deg[index][1] != newElev_deg){
@@ -525,6 +527,7 @@ void panner_setLoudspeakerDist_deg(void* const hPan, int index, float newDist) /
 {
     panner_data* pData = (panner_data*)(hPan);
     int ch;
+    newDist = roundf(newDist * 10.0f) / 10.0f;
     newDist = SAF_MAX(newDist, 0.0f); //min distance
     newDist = SAF_MIN(newDist, 10.0f); //max distance
 
@@ -543,6 +546,13 @@ void panner_setNumLoudspeakers(void* const hPan, int new_nLoudspeakers)
 {
     panner_data *pData = (panner_data*)(hPan);
     int ch;
+    //for (int i = 0; i < 64; i++)
+    //{
+    //    for (int j = 0; i < 3; j++)
+    //    {
+    //        pData->loudpkrs_dirs_deg[i][0] = 0.0f;
+    //    }
+    //} //XXX don't work
     
     new_nLoudspeakers  = new_nLoudspeakers > MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : new_nLoudspeakers;
     if(pData->new_nLoudpkrs != new_nLoudspeakers){
@@ -712,24 +722,28 @@ int panner_getMaxNumSources()
 float panner_getLoudspeakerAzi_deg(void* const hPan, int index)
 {
     panner_data *pData = (panner_data*)(hPan);
+    pData->loudpkrs_dirs_deg[index][0] = roundf(pData->loudpkrs_dirs_deg[index][0] * 10.0f) / 10.0f;
     return pData->loudpkrs_dirs_deg[index][0];
 }
 
 float panner_getLoudspeakerElev_deg(void* const hPan, int index)
 {
     panner_data *pData = (panner_data*)(hPan);
+    pData->loudpkrs_dirs_deg[index][1] = roundf(pData->loudpkrs_dirs_deg[index][1] * 10.0f) / 10.0f;
     return pData->loudpkrs_dirs_deg[index][1];
 }
 
 float panner_getLoudspeakerDist_deg(void* const hPan, int index)
 {
     panner_data* pData = (panner_data*)(hPan);
+    pData->loudpkrs_dirs_deg[index][2] = roundf(pData->loudpkrs_dirs_deg[index][2] * 10.0f) / 10.0f;
 	return pData->loudpkrs_dirs_deg[index][2];
 }
 
 int panner_getNumLoudspeakers(void* const hPan)
 {
-    panner_data *pData = (panner_data*)(hPan);
+    panner_data* pData = (panner_data*)(hPan);
+
     return pData->new_nLoudpkrs;
 }
 

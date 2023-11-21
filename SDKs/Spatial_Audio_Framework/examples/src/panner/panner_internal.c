@@ -113,10 +113,10 @@ void panner_initTFT
     pData->nLoudpkrs = pData->new_nLoudpkrs;
 }
 
-void panner_loadSourcePreset
+void panner_loadSourcePreset //XXXXloudpkrs_dirs_deg
 (
     SOURCE_CONFIG_PRESETS preset,
-    float dirs_deg[MAX_NUM_INPUTS][2],
+    float dirs_deg[MAX_NUM_INPUTS][2], //azi deg of each source
     int* newNCH,
     int* nDims
 )

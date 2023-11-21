@@ -109,6 +109,15 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
 	hVst = ownerFilter;
     hPan = hVst->getFXHandle();
 
+    //panner_data* pData = (panner_data*)hPan;
+    //// Now zero out the array using nested loops
+    //for (int i = 0; i < 3; i++) {
+    //    for (int j = 0; j < 64; j++) {
+    //        pData->loudpkrs_dirs_deg[i][j] = 0.0f;
+    //    }
+    //}
+   //     panner_data* pData = (panner_data*)(hPan);
+   // return pData->loudpkrs_dirs_deg[index][0];
     /* init OpenGL */
 #ifndef PLUGIN_EDITOR_DISABLE_OPENGL
     openGLContext.setMultisamplingEnabled(true);
@@ -594,6 +603,15 @@ void PluginEditor::sliderValueChanged (juce::Slider* sliderThatWasMoved)
     {
         //[UserSliderCode_SL_num_loudspeakers] -- add your slider handling code here..
         panner_setNumLoudspeakers(hPan, (int)SL_num_loudspeakers->getValue());
+
+        for (int i=0; i < (int)SL_num_loudspeakers->getValue();i++)
+        {
+            panner_setLoudspeakerAzi_deg(hPan, i, 0.0f);
+            panner_setLoudspeakerElev_deg(hPan, i, 0.0f);
+            panner_setLoudspeakerDist_deg(hPan, i, 0.0f);
+        }
+        
+        //); panner_setLoudspeakerAzi_deg(hPan, loudspeakerIndex, newValueScaled);
         //[/UserSliderCode_SL_num_loudspeakers]
     }
 

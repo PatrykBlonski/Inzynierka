@@ -25,6 +25,7 @@
 #include "PluginProcessor.h"
 #include "inputCoordsView.h"
 #include "outputCoordsView.h"
+#include "_common.h"
 #include "pannerView.h"
 #include "../../resources/SPARTALookAndFeel.h"
 

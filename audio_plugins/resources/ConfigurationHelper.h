@@ -590,6 +590,7 @@ public:
 
             loudspeaker->setProperty ("Azimuth", (*it).getProperty ("Azimuth"));
             loudspeaker->setProperty ("Elevation", (*it).getProperty ("Elevation"));
+            loudspeaker->setProperty("Distance", (*it).getProperty("Distance"));
             loudspeaker->setProperty ("Radius", (*it).getProperty ("Radius"));
             loudspeaker->setProperty ("IsImaginary", (*it).getProperty("Imaginary"));
             loudspeaker->setProperty ("Channel", (*it).getProperty("Channel"));

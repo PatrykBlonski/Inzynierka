@@ -56,6 +56,7 @@ pannerView::pannerView (PluginProcessor* ownerFilter, int _width, int _height)
     //}
     //NSources = panner_getNumSources(hPan);
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
+
     for(int ls=0; ls<NLoudspeakers; ls++){
         LoudspeakerIcons[ls].setBounds(width - width*(panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f)/360.f - icon_size/2.0f,
                                        height - height*(panner_getLoudspeakerElev_deg(hPan, ls)+90.0f)/180.0f - icon_size/2.0f,
@@ -252,6 +253,21 @@ void pannerView::refreshPanView()
     }
     NSources = panner_getNumSources(hPan);
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
+
+    //TEST
+
+    panner_setLoudspeakerAzi_deg(hPan, 0, 66.0f);
+    panner_setLoudspeakerDist_deg(hPan, 0, 5.0f);
+    panner_setLoudspeakerElev_deg(hPan, 0, 2.0f);
+
+    panner_setLoudspeakerAzi_deg(hPan, 1, 31.0f);
+    panner_setLoudspeakerDist_deg(hPan, 1, 3.0f);
+    panner_setLoudspeakerElev_deg(hPan, 1, 3.0f);
+
+    panner_setLoudspeakerAzi_deg(hPan, 2, 98.0f);
+    panner_setLoudspeakerDist_deg(hPan, 2, 9.0f);
+    panner_setLoudspeakerElev_deg(hPan, 2, 2.0f);
+
     for(int ls=0; ls<NLoudspeakers; ls++){
         calculateCoordinates(panner_getLoudspeakerDist_deg(hPan, ls), panner_getLoudspeakerAzi_deg(hPan, ls), &x, &y);
         LoudspeakerIcons[ls].setBounds(width - width*(11 - x)/22.f - icon_size/2.0f,

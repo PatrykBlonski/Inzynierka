@@ -61,7 +61,7 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
     elevLabels = new std::unique_ptr<Label>[(unsigned long)maxNCH];
     distLabels =  new std::unique_ptr<Label>[(unsigned long)maxNCH];
 
-    for( int i=0; i<maxNCH; i++){
+    for( int i=0; i<maxNCH; i++){ //outputCordsView.cpp
         /* create and initialise azimuth labels */
         distLabels[i].reset(new Label("new label"));
         addAndMakeVisible(distLabels[i].get());
