@@ -55,62 +55,105 @@ void panner_setCodecStatus(void* const hPan, CODEC_STATUS newStatus)
     pData->codecStatus = newStatus;
 }
 
-void panner_initGainTables(void* const hPan)
-{
-    panner_data *pData = (panner_data*)(hPan);
-#ifndef FORCE_3D_LAYOUT
-    int i;
-    float sum_elev;
-    
-    /* determine dimensionality */
-    sum_elev = 0.0f;
-    for(i=0; i<pData->nLoudpkrs; i++)
-        sum_elev += fabsf(pData->loudpkrs_dirs_deg[i][1]); 
-    if(sum_elev < 0.01f)
-        pData->output_nDims = 2;
-    else
-        pData->output_nDims = 3;
-#endif
-    
-    /* generate VBAP gain table */
-    free(pData->vbap_gtable);
-    pData->vbapTableRes[0] = 1;
-    pData->vbapTableRes[1] = 1;
-#ifdef FORCE_3D_LAYOUT
-    pData->output_nDims = 3;
-    generateVBAPgainTable3D((float*)pData->loudpkrs_dirs_deg, pData->nLoudpkrs, pData->vbapTableRes[0], pData->vbapTableRes[1], 1, 1, pData->spread_deg,
-                            &(pData->vbap_gtable), &(pData->N_vbap_gtable), &(pData->nTriangles));
-#else
-    if(pData->output_nDims==2)
-        generateVBAPgainTable2D((float*)pData->loudpkrs_dirs_deg, pData->nLoudpkrs, pData->vbapTableRes[0],
-                                &(pData->vbap_gtable), &(pData->N_vbap_gtable), &(pData->nTriangles));
-    else{
-        generateVBAPgainTable3D((float*)pData->loudpkrs_dirs_deg, pData->nLoudpkrs, pData->vbapTableRes[0], pData->vbapTableRes[1], 1, 1, pData->spread_deg,
-                                &(pData->vbap_gtable), &(pData->N_vbap_gtable), &(pData->nTriangles));
-        if(pData->vbap_gtable==NULL){
-            /* if generating vbap gain tabled failed, re-calculate with 2D VBAP */
-            pData->output_nDims = 2;
-            panner_initGainTables(hPan);
-        }
-    }
-#endif
-}
-
 void panner_initTFT
 (
     void* const hPan
 )
 {
     panner_data *pData = (panner_data*)(hPan);
-    
-    if(pData->hSTFT==NULL)
-        afSTFT_create(&(pData->hSTFT), pData->new_nSources, pData->new_nLoudpkrs, HOP_SIZE, 0, 1, AFSTFT_BANDS_CH_TIME);
-    else if (pData->new_nSources!=pData->nSources || pData->new_nLoudpkrs!=pData->nLoudpkrs){
-        afSTFT_channelChange(pData->hSTFT, pData->new_nSources, pData->new_nLoudpkrs);
-        afSTFT_clearBuffers(pData->hSTFT); 
+    int nSH, new_nSH;
+
+    nSH = (pData->masterOrder + 1) * (pData->masterOrder + 1);
+    new_nSH = (pData->new_masterOrder + 1) * (pData->new_masterOrder + 1);
+    if (pData->hSTFT == NULL)
+        afSTFT_create(&(pData->hSTFT), new_nSH, 0, HOP_SIZE, 0, 1, AFSTFT_BANDS_CH_TIME);
+    else if (nSH != new_nSH) {
+        afSTFT_channelChange(pData->hSTFT, new_nSH, 0);
+        afSTFT_clearBuffers(pData->hSTFT);
+        memset(pData->Cx, 0, MAX_NUM_SH_SIGNALS * MAX_NUM_SH_SIGNALS * HYBRID_BANDS * sizeof(float_complex));
     }
     pData->nSources = pData->new_nSources;
     pData->nLoudpkrs = pData->new_nLoudpkrs;
+}
+
+
+void panner_initAna(void* const hPan)
+{
+    panner_data* pData = (panner_data*)(hPan);
+    powermap_codecPars* pars = pData->pars;
+    int i, j, n, N_azi, N_ele, nSH_order, order;
+    float scaleY, hfov, vfov, fi, aspectRatio;
+    float* Y_grid_N, * grid_x_axis, * grid_y_axis;
+
+    order = pData->new_masterOrder;
+
+    /* Store Y_grid per order */
+    int geosphere_ico_freq = 9;
+    pars->grid_dirs_deg = (float*)__HANDLES_geosphere_ico_dirs_deg[geosphere_ico_freq];
+    pars->grid_nDirs = __geosphere_ico_nPoints[geosphere_ico_freq];
+    Y_grid_N = malloc1d(((order + 1) * (order + 1)) * (pars->grid_nDirs) * sizeof(float));
+    getRSH(order, pars->grid_dirs_deg, pars->grid_nDirs, Y_grid_N);
+    for (n = 1; n <= order; n++) {
+        nSH_order = (n + 1) * (n + 1);
+        scaleY = 1.0f / (float)nSH_order;
+        free(pars->Y_grid[n - 1]);
+        free(pars->Y_grid_cmplx[n - 1]);
+        pars->Y_grid[n - 1] = malloc1d(nSH_order * (pars->grid_nDirs) * sizeof(float));
+        pars->Y_grid_cmplx[n - 1] = malloc1d(nSH_order * (pars->grid_nDirs) * sizeof(float_complex));
+        memcpy(pars->Y_grid[n - 1], Y_grid_N, nSH_order * (pars->grid_nDirs) * sizeof(float));
+        utility_svsmul(pars->Y_grid[n - 1], &scaleY, nSH_order * (pars->grid_nDirs), NULL);
+        for (i = 0; i < nSH_order; i++)
+            for (j = 0; j < pars->grid_nDirs; j++)
+                pars->Y_grid_cmplx[n - 1][i * (pars->grid_nDirs) + j] = cmplxf(pars->Y_grid[n - 1][i * (pars->grid_nDirs) + j], 0.0f);
+    }
+
+    /* generate interpolation table for current display settings */
+    switch (pData->HFOVoption) {
+    default:
+    case HFOV_360: hfov = 360.0f; break;
+    }
+    switch (pData->aspectRatioOption) {
+    default:
+    case ASPECT_RATIO_2_1: aspectRatio = 2.0f; break;
+    }
+    N_azi = pData->dispWidth;
+    N_ele = (int)((float)pData->dispWidth / aspectRatio + 0.5f);
+    grid_x_axis = malloc1d(N_azi * sizeof(float));
+    grid_y_axis = malloc1d(N_ele * sizeof(float));
+    vfov = hfov / aspectRatio;
+    for (fi = -hfov / 2.0f, i = 0; i < N_azi; fi += hfov / N_azi, i++)
+        grid_x_axis[i] = fi;
+    for (fi = -vfov / 2.0f, i = 0; i < N_ele; fi += vfov / N_ele, i++)
+        grid_y_axis[i] = fi;
+    free(pars->interp_dirs_deg);
+    pars->interp_dirs_deg = malloc1d(N_azi * N_ele * 2 * sizeof(float));
+    for (i = 0; i < N_ele; i++) {
+        for (j = 0; j < N_azi; j++) {
+            pars->interp_dirs_deg[(i * N_azi + j) * 2] = grid_x_axis[j];
+            pars->interp_dirs_deg[(i * N_azi + j) * 2 + 1] = grid_y_axis[i];
+        }
+    }
+    free(pars->interp_table);
+    generateVBAPgainTable3D_srcs(pars->interp_dirs_deg, N_azi * N_ele, pars->grid_dirs_deg, pars->grid_nDirs, 0, 0, 0.0f, &(pars->interp_table), &(pars->interp_nDirs), &(pars->interp_nTri));
+    VBAPgainTable2InterpTable(pars->interp_table, pars->interp_nDirs, pars->grid_nDirs);
+
+    /* reallocate memory for storing the powermaps */
+    free(pData->pmap);
+    pData->pmap = malloc1d(pars->grid_nDirs * sizeof(float));
+    free(pData->prev_pmap);
+    pData->prev_pmap = calloc1d(pars->grid_nDirs, sizeof(float));
+    for (i = 0; i < NUM_DISP_SLOTS; i++) {
+        free(pData->pmap_grid[i]);
+        pData->pmap_grid[i] = calloc1d(pars->interp_nDirs, sizeof(float));
+    }
+
+    pData->masterOrder = order;
+    if (pData->spPWD == NULL) {
+        sphPWD_create(&(pData->spPWD), 1, pars->interp_dirs_deg, pars->interp_nDirs);
+    }
+    free(Y_grid_N);
+    free(grid_x_axis);
+    free(grid_y_axis);
 }
 
 void panner_loadSourcePreset //XXXXloudpkrs_dirs_deg

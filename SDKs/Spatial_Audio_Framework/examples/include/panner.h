@@ -82,14 +82,14 @@ extern "C" {
  *
  * @param[in] phPan (&) address of panner handle
  */
-void panner_create(void** const phPan, void** const bhPan);
+void panner_create(void** const phPan);
 
 /**
  * Destroys an instance of the panner
  *
  * @param[in] phPan (&) address of panner handle
  */
-void panner_destroy(void** const phPan, void** const bhPan);
+void panner_destroy(void** const phPan);
 
 /**
  * Initialises an instance of panner with default settings
@@ -124,6 +124,16 @@ float toRadians(float degrees);
 void calculateCoordinates(float distance, float azimuth, float* x, float* y); //we get x and y
 
 
+void panner_process(void* const hPan,
+    const float* const* inputs,
+    int                  nInputs,
+    int                  nSamples,
+    int                  loudNum,
+    int                  isPlaying
+);
+int panner_get_directions(void* const hPan);
+void panner_requestPmapUpdate(void* const hPan);
+
 /**
  * Pans the input signals/sources to the loudspeaker channels using VBAP [1],
  * and optional spreading [2] and frequency-dependent normalisation as a
@@ -147,13 +157,13 @@ void calculateCoordinates(float distance, float azimuth, float* x, float* y); //
  *          (2014). Gain normalisation in amplitude panning as a function of
  *          frequency and room reverberance. 55th International Conference of
  *          the AES. Helsinki, Finland.
- */
+ *//*
 void panner_process(void* const hPan,
                     const float *const * inputs,
                     float** const outputs,
                     int nInputs,
                     int nOutputs,
-                    int nSamples);
+                    int nSamples);*/
     
     
 /* ========================================================================== */
@@ -206,38 +216,9 @@ void panner_setInputConfigPreset(void* const hPan, int newPresetID);
  *          frequency and room reverberance. 55th International Conference of
  *          the AES. Helsinki, Finland.
  */
-void panner_setDTT(void* const hPan, float newValue);
-    
-/** Sets the degree of spread, in DEGREES */
-void panner_setSpread(void* const hPan, float newValue);
+void panner_setChOrder(void* const hPan, int newOrder);
+void panner_setNormType(void* const hPan, int newType);
 
-/** Sets the 'yaw' rotation angle, in DEGREES */
-void panner_setYaw(void* const hPan, float newYaw);
-
-/** Sets the 'pitch' rotation angle, in DEGREES */
-void panner_setPitch(void* const hPan, float newPitch);
-
-/** Sets the 'roll' rotation angle, in DEGREES */
-void panner_setRoll(void* const hPan, float newRoll);
-
-/**
- * Sets a flag as to whether to "flip" the sign of the current 'yaw' angle
- * (0: do not flip sign, 1: flip the sign)
- */
-void panner_setFlipYaw(void* const hPan, int newState);
-
-/**
- * Sets a flag as to whether to "flip" the sign of the current 'pitch' angle
- * (0: do not flip sign, 1: flip the sign)
- */
-void panner_setFlipPitch(void* const hPan, int newState);
-
-/**
- * Sets a flag as to whether to "flip" the sign of the current 'roll' angle
- * (0: do not flip sign, 1: flip the sign)
- */
-void panner_setFlipRoll(void* const hPan, int newState);
-    
     
 /* ========================================================================== */
 /*                                Get Functions                               */
@@ -257,6 +238,7 @@ CODEC_STATUS panner_getCodecStatus(void* const hPan);
  *  - 0: intialisation/processing has started
  *  - 1: intialisation/processing has ended
  */
+PROC_STATUS panner_getProcStatus(void* const hPan);
 
 PROC_STATUS panner_getBeamStatus(void* const bPan);
 
@@ -298,39 +280,8 @@ int panner_getMaxNumLoudspeakers(void);
 
 /** Returns the DAW/Host sample rate */
 int panner_getDAWsamplerate(void* const hPan);
-
-/** Returns the room coefficient value 0..1 */
-float panner_getDTT(void* const hPan);
-
-/** Returns the spread value, in DEGREES */
-float panner_getSpread(void* const hPan);
-
-/** Returns the 'yaw' rotation angle, in DEGREES */
-float panner_getYaw(void* const hPan);
-
-/** Returns the 'pitch' rotation angle, in DEGREES */
-float panner_getPitch(void* const hPan);
-
-/** Returns the 'roll' rotation angle, in DEGREES */
-float panner_getRoll(void* const hPan);
-
-/**
- * Returns a flag as to whether to "flip" the sign of the current 'yaw' angle
- * (0: do not flip sign, 1: flip the sign)
- */
-int panner_getFlipYaw(void* const hPan);
-
-/**
- * Returns a flag as to whether to "flip" the sign of the current 'pitch' angle
- * (0: do not flip sign, 1: flip the sign)
- */
-int panner_getFlipPitch(void* const hPan);
-
-/**
- * Returns a flag as to whether to "flip" the sign of the current 'roll' angle
- * (0: do not flip sign, 1: flip the sign)
- */
-int panner_getFlipRoll(void* const hPan);
+int panner_getChOrder(void* const hPan);
+int panner_getNormType(void* const hPan);
 
 /**
  * Returns the processing delay in samples (may be used for delay compensation

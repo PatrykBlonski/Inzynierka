@@ -23,7 +23,6 @@
 
 #include "JuceHeader.h"
 #include "PluginProcessor.h"
-#include "inputCoordsView.h"
 #include "outputCoordsView.h"
 #include "_common.h"
 #include "pannerView.h"
@@ -118,6 +117,8 @@ private:
     std::unique_ptr<juce::TextButton> tb_loadJSON_src;
     std::unique_ptr<juce::TextButton> tb_saveJSON_ls;
     std::unique_ptr<juce::TextButton> tb_calibration;
+    std::unique_ptr<juce::ComboBox> CBformat;
+    std::unique_ptr<juce::ComboBox> CBnorm;
 
 
     //==============================================================================

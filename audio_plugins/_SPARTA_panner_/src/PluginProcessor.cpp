@@ -39,80 +39,105 @@ PluginProcessor::PluginProcessor() :
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
     refreshWindow = true;
-    panner_create(&hPan, &bhPan);
-    recordingBuffer.setSize(4, 48000 * 5);
+    panner_create(&hPan);
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
 PluginProcessor::~PluginProcessor()
 {
-	panner_destroy(&hPan, &bhPan);
+	panner_destroy(&hPan);
+}
+
+void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer) {
+    // Calculate the total number of samples
+    int totalSamples = static_cast<int>(duration * sampleRate);
+
+    // Resize the sweepBuffer to hold the sine sweep
+    sweepBuffer.setSize(1, totalSamples);  // Assuming mono
+
+    // Variables for sweep generation
+    double phase = 0.0;
+    double phaseIncrement;
+    double frequency;
+    double time = 0.0;
+    double timeIncrement = 1.0 / sampleRate;
+
+    for (int i = 0; i < totalSamples; ++i) {
+        // Compute the instantaneous frequency using logarithmic interpolation
+        frequency = startFrequency * std::pow(endFrequency / startFrequency, time / duration);
+
+        // Compute the phase increment
+        phaseIncrement = 2.0 * double_Pi * frequency / sampleRate;
+
+        // Generate the sine sample
+        sweepBuffer.setSample(0, i, std::sin(phase));
+
+        // Update phase and wrap around 2*PI if necessary
+        phase += phaseIncrement;
+        if (phase >= 2.0 * double_Pi) {
+            phase -= 2.0 * double_Pi;
+        }
+
+        // Increment time
+        time += timeIncrement;
+    }
 }
 
 
-
 void PluginProcessor::startCalibration() {
-   // prepareToPlay(getSampleRate(), 240000);
-    std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
-    //std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
-    juce::String juceStringPath(stdStringPath);
-    ImpulseBuffer = loadImpulseResponse(juceStringPath);
-    calibrating = true;
-    phase = 0.0;
-    timeElapsed = 0.0;
-    frequency = startFrequency;
-    isRecording = true;
-    currentRecordingPosition = 0;
+    generateSineSweep(48000, SweepBuffer);
+    //juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\source.wav";
+   // std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
+    //SweepBuffer.setSize(1, 480000);
+    //SweepBuffer = loadImpulseResponse(juceStringPath);
+
+    juce::String fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
+    saveBufferToWav(SweepBuffer, fileName);
+    prepareToPlay(getSampleRate(), 480000);
+    recordingBuffer.setSize(panner_getNumSources(hPan), getSampleRate() * duration);
+    recordingBuffer.clear();
     loudspeakerNumber = 0;
+    latency = 0;
+    juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    ImpulseBuffer = loadImpulseResponse(juceStringPath);
+    currentRecordingPosition = 0;
+    calibrating = true;
+    //phase = 0.0;
+    //timeElapsed = 0.0;
+    //frequency = startFrequency;
+    isRecording = true;
 }
 
 void PluginProcessor::endCalibration() {
     isRecording = false;
-    calibrating = 0;
-    //saveBufferToWav(recordingBuffer);
-    //dsp::AudioBlock<float> block(recordingBuffer);
-    //// Create an AudioBlock and ProcessContext for the current channel only
-    //dsp::AudioBlock<float> channelBlock = block.getSingleChannelBlock(0);
-    //dsp::ProcessContextReplacing<float> context(channelBlock);
-    //// Perform the convolution
-    //convolution1.process(context);
-    //channelBlock = block.getSingleChannelBlock(1);
-    //dsp::ProcessContextReplacing<float> context1(channelBlock);
-    //// Perform the convolution
-    //convolution2.process(context1);
-
-    //channelBlock = block.getSingleChannelBlock(2);
-    //dsp::ProcessContextReplacing<float> context2(channelBlock);
-    //// Perform the convolution
-    //convolution3.process(context2);
-
-    //channelBlock = block.getSingleChannelBlock(3);
-    //dsp::ProcessContextReplacing<float> context3(channelBlock);
-    //// Perform the convolution
-    //convolution4.process(context3);
-    //saveBufferToWav(recordingBuffer);
-    panner_beamformer_process(ImpulseBuffer.getReadPointer(3), ImpulseBuffer.getReadPointer(1), ImpulseBuffer.getReadPointer(2), ImpulseBuffer.getNumSamples(), loudspeakerNumber, bhPan, hPan);
-    distanceCalculation(recordingBuffer, ImpulseBuffer, loudspeakerNumber);
-    while (panner_getBeamStatus == 0);
+    calibrating = false;
+   
+    juce::String fileName = "recorded_audio_mic_" + juce::String(loudspeakerNumber) + ".wav";
+    saveBufferToWav(recordingBuffer, fileName);
+   /* fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
+    saveBufferToWav(SweepBuffer, fileName);*/
+    distanceCalculation(SweepBuffer, ImpulseBuffer, loudspeakerNumber);
+    panner_process(hPan, ImpulseBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), ImpulseBuffer.getNumSamples(), loudspeakerNumber, 1);
     refreshWindow = true;
+
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
+        latency = 0;
         ImpulseBuffer.clear();
-        std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signals_") + std::to_string(loudspeakerNumber) + ".wav";
-        juce::String juceStringPath(stdStringPath);
+        juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
         ImpulseBuffer = loadImpulseResponse(juceStringPath);
-        phase = 0.0;
-        timeElapsed = 0.0;
-        frequency = startFrequency;
-        currentRecordingPosition = 0;
         recordingBuffer.clear();
+        //phase = 0.0;
+        //timeElapsed = 0.0;
+        //frequency = startFrequency;
+        currentRecordingPosition = 0;
         calibrating = true;
         isRecording = true;
     }
 }
 
 double PluginProcessor::computeSweepFrequency(double time) {
-    return jmap(time, 0.0, duration * 5, startFrequency, endFrequency);        
+    return jmap(time, 0.0, duration, startFrequency, endFrequency);        
 }
 
 void PluginProcessor::setParameter (int index, float newValue)
@@ -120,7 +145,6 @@ void PluginProcessor::setParameter (int index, float newValue)
     /* standard parameters */
     if(index < k_NumOfParameters){
         switch (index) {
-            case k_roomCoeff:  panner_setDTT(hPan, newValue); break;
             case k_numInputs:  panner_setNumSources(hPan, (int)(newValue*(float)(MAX_NUM_INPUTS)+0.5)); break;
             case k_numOutputs: panner_setNumLoudspeakers(hPan, (int)(newValue*(float)(MAX_NUM_OUTPUTS)+0.5)); break;
         }
@@ -187,7 +211,6 @@ float PluginProcessor::getParameter (int index)
     /* standard parameters */
     if(index < k_NumOfParameters){
         switch (index) {
-            case k_roomCoeff:  return (float)panner_getDTT(hPan);
             case k_numInputs:  return (float)(panner_getNumSources(hPan))/(float)(MAX_NUM_INPUTS);
             case k_numOutputs: return (float)(panner_getNumLoudspeakers(hPan))/(float)(MAX_NUM_OUTPUTS);
             default: return 0.0f;
@@ -255,7 +278,6 @@ const String PluginProcessor::getParameterText(int index)
     /* standard parameters */
     if(index < k_NumOfParameters){
         switch (index) {
-            case k_roomCoeff:  return String(panner_getDTT(hPan));
             case k_numInputs:  return String(panner_getNumSources(hPan));
             case k_numOutputs: return String(panner_getNumLoudspeakers(hPan));
             default: return "NULL";
@@ -348,32 +370,16 @@ void PluginProcessor::changeProgramName (int /*index*/, const String& /*newName*
 {
 }
 
-//void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
-//{
-//    nHostBlockSize = samplesPerBlock;
-//    nNumInputs =  getTotalNumInputChannels();
-//    nNumOutputs = getTotalNumOutputChannels();
-//    nSampleRate = (int)(sampleRate + 0.5);
-//    isPlaying = false;
-//
-//	panner_init(hPan, nSampleRate);
-//    AudioProcessor::setLatencySamples(panner_getProcessingDelay());
-//}
-
-void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    dsp::ProcessSpec spec;
-    spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = 1; // Each convolution instance is mono
+    nHostBlockSize = samplesPerBlock;
+    nNumInputs =  getTotalNumInputChannels();
+    nNumOutputs = getTotalNumOutputChannels();
+    nSampleRate = (int)(sampleRate + 0.5);
+    isPlaying = false;
 
-    // Prepare each convolution instance
-    convolution1.prepare(spec);
-    convolution2.prepare(spec);
-    convolution3.prepare(spec);
-    convolution4.prepare(spec);
-
-    loadImpulseResponse();
+	panner_init(hPan, nSampleRate);
+    AudioProcessor::setLatencySamples(panner_getProcessingDelay());
 }
 
 void PluginProcessor::releaseResources()
@@ -386,28 +392,29 @@ void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buff
     const int numSamples = buffer.getNumSamples();
     for (int sample = 0; sample < numSamples; ++sample) {
         // Compute the instantaneous frequency for the sweep
-        frequency = computeSweepFrequency(timeElapsed);
+        //frequency = computeSweepFrequency(timeElapsed);
 
-        // Compute the sample of the sine sweep
-        float sineSample = std::sin(phase);
+        //// Compute the sample of the sine sweep
+        //float sineSample = std::sin(phase);
 
-        // Write this sample to all output channels (you can change this if needed)
-        buffer.setSample(loudspeakerNumber + numberOfInputs, sample, sineSample);
+        //// Write this sample to all output channels (you can change this if needed)
+        //buffer.setSample(loudspeakerNumber + numberOfInputs, sample, sineSample);
 
-        // Increment phase and wrap if it exceeds 2*PI
-        phase += (2.0 * double_Pi * frequency) * deltaT;
-        if (phase > 2.0 * double_Pi) {
-            phase -= 2.0 * double_Pi;
-        }
+        //// Increment phase and wrap if it exceeds 2*PI
+        //phase += (2.0 * double_Pi * frequency) * deltaT;
+        //if (phase > 2.0 * double_Pi) {
+        //    phase -= 2.0 * double_Pi;
+        //}
 
-        // Update time elapsed
-        timeElapsed += deltaT;
+        //// Update time elapsed
+        //timeElapsed += deltaT;
 
-        // Stop the sweep if the duration has been reached
-        if (timeElapsed >= duration) {
-            endCalibration();
-            break;
-        }
+        //// Stop the sweep if the duration has been reached
+        //if (timeElapsed >= duration) {
+        //    endCalibration();
+        //    break;
+        //}
+        buffer.setSample(numberOfInputs + loudspeakerNumber, sample, SweepBuffer.getSample(0, currentRecordingPosition + sample));
     }
 }
 
@@ -419,6 +426,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     const double sampleRate = getSampleRate();
     const double deltaT = 1.0 / sampleRate;  // Time increment per sample
     int numberOfInputs = panner_getNumSources(hPan);
+    float** bufferData;
 
 
     // Clear any unused channels
@@ -428,105 +436,185 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
 
 
     if (calibrating) {
-       // prepareToPlay(sampleRate, numSamples);
-        /*if (buffer.getNumSamples() != 0 && buffer.getNumChannels() != 0) {
-            ImpulseBuffer = loadImpulseResponse("C:/Users/patry/Desktop/impulse_responses/impulse_responses");
-        }*/
-        generateSine(deltaT, buffer);
-    }
-
-    if (isRecording && currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) {
-        for (int channel = numberOfInputs; channel <= numberOfInputs; ++channel) {
-             recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-         /*   recordingBuffer.copyFrom(channel - 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel + 1, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());
-            recordingBuffer.copyFrom(channel + 2, currentRecordingPosition, buffer, channel, 0, buffer.getNumSamples());*/
-        }
-        currentRecordingPosition += buffer.getNumSamples();
+            if (currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) 
+                buffer.copyFrom(numberOfInputs + loudspeakerNumber, 0, SweepBuffer, 0, currentRecordingPosition, buffer.getNumSamples());
+            if (currentRecordingPosition - 2 * buffer.getNumSamples() <= recordingBuffer.getNumSamples() && latency > 2) {
+                for (int channel = 0; channel < numberOfInputs; ++channel) {
+                    recordingBuffer.copyFrom(channel, currentRecordingPosition - 3 * buffer.getNumSamples(), buffer, channel, 0, buffer.getNumSamples());
+                }
+            }
+            else if (currentRecordingPosition - 2 * buffer.getNumSamples() > recordingBuffer.getNumSamples()){
+                endCalibration();
+            }
+            currentRecordingPosition += buffer.getNumSamples();
+            latency += 1;
     }
 }
 
 void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum)
 {
-    // Check if buffers are valid and have the same number of samples
-    jassert(sweep.getNumSamples() == input.getNumSamples());
-    jassert(sweep.getNumChannels() > 0 && input.getNumChannels() > 0);
-
     const int numOfSamples = sweep.getNumSamples();
     const int fftSize = nextPowerOfTwo(numOfSamples); //finding next power of 2 for FFT calc
-    dsp::FFT fft((int)std::log2(fftSize));
 
-    // Allocate space for the FFT data
-    HeapBlock<float> sweepFFTData(fftSize * 2, true); // Initialize to zero
-    HeapBlock<float> inputFFTData(fftSize * 2, true); // Initialize to zero
+    kiss_fft_cfg fft_cfg = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
+    kiss_fft_cfg ifft_cfg = kiss_fft_alloc(fftSize, 1, nullptr, nullptr);
 
-    // Copy input data to the fftData's real part
-    const float* sweepSamples = sweep.getReadPointer(0);
-    const float* inputSamples = input.getReadPointer(2);
+    std::vector<kiss_fft_cpx> kiss_sweep_in(fftSize);
+    std::vector<kiss_fft_cpx> kiss_sweep_out(fftSize);
+    std::vector<kiss_fft_cpx> kiss_input_in(fftSize);
+    std::vector<kiss_fft_cpx> kiss_input_out(fftSize);
 
-    // Prepare the data for FFT
-    for (int i = 0; i < numOfSamples; ++i)
-    {
-        sweepFFTData[i] = sweepSamples[i];
-        inputFFTData[i] = inputSamples[i];
+    for (int i = 0; i < numOfSamples; ++i) {
+        kiss_sweep_in[i].r = sweep.getSample(0, i);
+        kiss_sweep_in[i].i = 0.0f;
+
+        kiss_input_in[i].r = input.getSample(0, i);
+        kiss_input_in[i].i = 0.0f;
+    }
+    // Zero-pad the rest if needed
+    for (int i = numOfSamples; i < fftSize; ++i) {
+        kiss_sweep_in[i].r = 0.0f;
+        kiss_sweep_in[i].i = 0.0f;
+
+        kiss_input_in[i].r = 0.0f;
+        kiss_input_in[i].i = 0.0f;
     }
 
-    // Perform the FFT in-place
-    fft.performFrequencyOnlyForwardTransform(sweepFFTData);
-    fft.performFrequencyOnlyForwardTransform(inputFFTData);
+    kiss_fft(fft_cfg, kiss_sweep_in.data(), kiss_sweep_out.data());
+    kiss_fft(fft_cfg, kiss_input_in.data(), kiss_input_out.data());
 
-    // Allocate space for the result of the division (transfer function)
-    HeapBlock<dsp::Complex<float>> transferFunctionFFTData(fftSize, true); // Initialize to zero
-
-    // Perform the division in the frequency domain with regularization
     const float epsilon = 1e-3f; // Threshold to prevent division by very small numbers
-    for (int i = 0; i < fftSize; ++i)
-    {
-        dsp::Complex<float> sweepValue(sweepFFTData[i * 2], sweepFFTData[i * 2 + 1]);
-        dsp::Complex<float> inputValue(inputFFTData[i * 2], inputFFTData[i * 2 + 1]);
 
-        if (std::abs(sweepValue) > epsilon)
-        {
-            transferFunctionFFTData[i] = inputValue / sweepValue;
+    for (int i = 0; i < fftSize; ++i) {
+        if (std::abs(kiss_sweep_out[i].r) > epsilon || std::abs(kiss_sweep_out[i].i) > epsilon) {
+            // Perform the division
+            kiss_input_in[i].r = (kiss_input_out[i].r * kiss_sweep_out[i].r + kiss_input_out[i].i * kiss_sweep_out[i].i) /
+                (kiss_sweep_out[i].r * kiss_sweep_out[i].r + kiss_sweep_out[i].i * kiss_sweep_out[i].i);
+            kiss_input_in[i].i = (kiss_input_out[i].i * kiss_sweep_out[i].r - kiss_input_out[i].r * kiss_sweep_out[i].i) /
+                (kiss_sweep_out[i].r * kiss_sweep_out[i].r + kiss_sweep_out[i].i * kiss_sweep_out[i].i);
         }
-        else
-        {
-            transferFunctionFFTData[i] = dsp::Complex<float>(0.0f, 0.0f); // Regularization
+        else {
+            // Regularization
+            kiss_input_in[i].r = 0.0f;
+            kiss_input_in[i].i = 0.0f;
         }
     }
 
-    // Prepare buffer for inverse FFT result (time domain)
-    HeapBlock<float> estimatedIRData(fftSize * 2, true); // Initialize to zero
+    kiss_fft(ifft_cfg, kiss_input_in.data(), kiss_input_out.data());
 
-    // Prepare data for inverse FFT
-    for (int i = 0; i < fftSize; ++i)
-    {
-        estimatedIRData[i * 2] = transferFunctionFFTData[i].real();
-        estimatedIRData[i * 2 + 1] = transferFunctionFFTData[i].imag();
-    }
+    // Create an AudioBuffer to store the impulse response
+    AudioBuffer<float> impulseResponse(1, fftSize);
 
-    // Perform the inverse FFT
-    fft.performRealOnlyInverseTransform(estimatedIRData);
-
-    // Find the peak in the impulse response to determine the time of arrival
+    //Variables for fiding time
     float peakTime = 0.0f;
     float maxVal = std::numeric_limits<float>::lowest();
+    int peakIndex = 0;  // Index of the peak value
 
-    for (int i = 1; i < fftSize - 1; ++i)
-    {
-        float val = estimatedIRData[i * 2]; // We only need the real part
-        if (val > maxVal)
+    for (int i = 0; i < fftSize; ++i) {
+        impulseResponse.setSample(0, i, kiss_input_out[i].r);
+
+        float currentVal = kiss_input_out[i].r;
+        if (std::abs(currentVal) > maxVal)
         {
-            maxVal = val; //finding peak Value
-            peakTime = (float)i / 48000.0f; //const sampling rate
+            maxVal = std::abs(currentVal);
+            peakIndex = i; // Update index of the peak value
         }
     }
 
-    // Calculate the distance using the time of arrival and the speed of sound
-    const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
-    float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+    kiss_fft_free(fft_cfg);
+    kiss_fft_free(ifft_cfg);
+
+    juce::String fileName = "impulse_" + juce::String(loudspeakerNumber) + ".wav";
+    saveBufferToWav(impulseResponse, fileName);
+
+    peakTime = static_cast<float>(peakIndex) / static_cast<float>(48000); // Use actual sample rate
+
+    const float speedOfSound = 343.0f;
+    float distance = peakTime * speedOfSound;
+
     panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+   // // Check if buffers are valid and have the same number of samples
+   // jassert(sweep.getNumSamples() == input.getNumSamples());
+   //// jassert(sweep.getNumChannels() > 0 && input.getNumChannels() > 0);
+
+   // const int numOfSamples = sweep.getNumSamples();
+   // const int fftSize = nextPowerOfTwo(numOfSamples); //finding next power of 2 for FFT calc
+   // juce::dsp::FFT fft((int)std::log2(fftSize));         
+
+   // // Allocate space for the FFT data
+   // HeapBlock<float> sweepFFTData(fftSize * 2, true); // Initialize to zero
+   // HeapBlock<float> inputFFTData(fftSize * 2, true); // Initialize to zero
+
+   // // Copy input data to the fftData's real part
+   // const float* sweepSamples = sweep.getReadPointer(0);
+   // const float* inputSamples = input.getReadPointer(0);
+
+   // // Prepare the data for FFT
+   // for (int i = 0; i < numOfSamples; ++i)
+   // {
+   //     sweepFFTData[i] = sweepSamples[i];
+   //     inputFFTData[i] = inputSamples[i];
+   // }
+
+   // // Perform the FFT in-place
+   // fft.performFrequencyOnlyForwardTransform(sweepFFTData);
+   // fft.performFrequencyOnlyForwardTransform(inputFFTData);
+
+   // // Allocate space for the result of the division (transfer function)
+   // HeapBlock<juce::dsp::Complex<float>> transferFunctionFFTData(fftSize, true); // Initialize to zero
+   // 
+   // // Perform the division in the frequency domain with regularization
+   // const float epsilon = 1e-3f; // Threshold to prevent division by very small numbers
+   // for (int i = 0; i < fftSize; ++i)
+   // {
+   //     juce::dsp::Complex<float> sweepValue(sweepFFTData[i * 2], sweepFFTData[i * 2 + 1]);
+   //     juce::dsp::Complex<float> inputValue(inputFFTData[i * 2], inputFFTData[i * 2 + 1]);
+
+   //     if (std::abs(sweepValue) > epsilon)
+   //     {
+   //         transferFunctionFFTData[i] = inputValue / sweepValue;
+   //     }
+   //     else
+   //     {
+   //         transferFunctionFFTData[i] = juce::dsp::Complex<float>(0.0f, 0.0f); // Regularization
+   //     }
+   // }
+
+   // // Prepare buffer for inverse FFT result (time domain)
+   // HeapBlock<float> estimatedIRData(fftSize * 2, true); // Initialize to zero
+
+   // // Prepare data for inverse FFT
+   // for (int i = 0; i < fftSize; ++i)
+   // {
+   //     estimatedIRData[i * 2] = transferFunctionFFTData[i].real();
+   //     estimatedIRData[i * 2 + 1] = transferFunctionFFTData[i].imag();
+   // }
+
+   // // Perform the inverse FFT
+   // fft.performRealOnlyInverseTransform(estimatedIRData);
+
+   // // Find the peak in the impulse response to determine the time of arrival
+   // float peakTime = 0.0f;
+   // float maxVal = std::numeric_limits<float>::lowest();
+   // AudioBuffer<float> impulseResponse;
+   // impulseResponse.setSize(1, fftSize);
+
+   // for (int i = 1; i < fftSize - 1; ++i)
+   // {
+   //     float val = estimatedIRData[i * 2]; // We only need the real part
+   //     impulseResponse.setSample(0, i - 1, val);
+   //     if (val > maxVal)
+   //     {
+   //         maxVal = val; //finding peak Value
+   //         peakTime = (float)i / 48000.0f; //const sampling rate
+   //     }
+   // }
+   // juce::String fileName = "impulse_" + juce::String(loudspeakerNumber) + ".wav";
+   // saveBufferToWav(impulseResponse, fileName);
+   // // Calculate the distance using the time of arrival and the speed of sound
+   // const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
+   // float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+   // panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
 }
 
 
@@ -537,7 +625,7 @@ void PluginProcessor::loadImpulseResponse()
     //std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
     juce::String juceStringPath(stdStringPath);
     AudioBuffer<float> irBuffer = loadImpulseResponse(juceStringPath);
-    saveBufferToWav(irBuffer);
+   // saveBufferToWav(irBuffer);
     // Load the impulse response for each channel into each convolution instance
     if (irBuffer.getNumChannels() == 4)
     {
@@ -590,11 +678,11 @@ void PluginProcessor::loadImpulseResponse()
     }
 }
 
-void PluginProcessor::saveBufferToWav(AudioBuffer<float> &buffer)
+void PluginProcessor::saveBufferToWav(AudioBuffer<float> &buffer, const String& path)
 {
     // File path
 
-    juce::File outputFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("recorded_audio.wav");
+    juce::File outputFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile(path);
 
     // Create an AudioFormatManager and register the WAV format
     juce::AudioFormatManager formatManager;
@@ -683,7 +771,6 @@ void PluginProcessor::getStateInformation (MemoryBlock& destData)
         xml.setAttribute("SourceElevDeg" + String(i), panner_getSourceElev_deg(hPan,i));
     }
     xml.setAttribute("nSources", panner_getNumSources(hPan));
-    xml.setAttribute("DTT", panner_getDTT(hPan));
     
     xml.setAttribute("JSONFilePath", lastDir.getFullPathName());
     
@@ -710,8 +797,6 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
             }
             if(xmlState->hasAttribute("nSources"))
                 panner_setNumSources(hPan, xmlState->getIntAttribute("nSources", 1));
-            if(xmlState->hasAttribute("DTT"))
-                panner_setDTT(hPan, (float)xmlState->getDoubleAttribute("DTT", 0.5f));
             
             if(xmlState->hasAttribute("JSONFilePath"))
                 lastDir = xmlState->getStringAttribute("JSONFilePath", "");
@@ -758,7 +843,7 @@ void PluginProcessor::saveConfigurationToFile (File destination, int srcOrLs)
                 elements.appendChild (ConfigurationHelper::
                                      createElement(panner_getLoudspeakerAzi_deg(hPan, i),
                                                        panner_getLoudspeakerElev_deg(hPan, i),
-                                                       1.0f, i+1, false, 1.0f), nullptr);
+                                                       panner_getLoudspeakerDist_deg(hPan, i), i + 1, false, 1.0f), nullptr);
             }
         }
         break;

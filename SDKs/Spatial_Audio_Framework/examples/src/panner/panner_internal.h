@@ -61,12 +61,15 @@ extern "C" {
 # if defined(FRAME_SIZE) /* Use the global framesize if it is specified: */
 #  define PANNER_FRAME_SIZE ( FRAME_SIZE )          /**< Framesize, in time-domain samples */
 # else /* Otherwise, the default framesize for this example is: */
-#  define PANNER_FRAME_SIZE ( 128 )                 /**< Framesize, in time-domain samples */
+#  define PANNER_FRAME_SIZE ( 480000 )                 /**< Framesize, in time-domain samples */
 # endif
 #endif
 #define HOP_SIZE ( 128 )                            /**< STFT hop size */
 #define HYBRID_BANDS ( HOP_SIZE + 5 )               /**< Number of frequency bands */
 #define TIME_SLOTS ( PANNER_FRAME_SIZE / HOP_SIZE ) /**< Number of STFT timeslots */
+#define MAX_COV_AVG_COEFF ( 0.45f )                   /**< Maximum supported covariance averaging coefficient  */
+#define NUM_DISP_SLOTS ( 2 )                          /**< Number of display slots */
+
 
 /* Checks: */
 #if (PANNER_FRAME_SIZE % HOP_SIZE != 0)
@@ -77,63 +80,86 @@ extern "C" {
 /*                                 Structures                                 */
 /* ========================================================================== */
 
+/** Contains variables for scanning grids, and beamforming */
+typedef struct _powermap_codecPars
+{
+    float* grid_dirs_deg;   /**< Spherical scanning grid directions, in degrees; FLAT: grid_nDirs x 2 */
+    int grid_nDirs;         /**< Number of scanning directions */
+    float* interp_dirs_deg; /**< 2D rectangular window interpolation directions, in degrees; FLAT: interp_nDirs x 2 */
+    float* interp_table;    /**< Spherical->2D interpolation table; FLAT: interp_nDirs x grid_nDirs */
+    int interp_nDirs;       /**< Number of interpolation directions */
+    int interp_nTri;        /**< Number of triangles in the spherical triangulared grid */
+    float* Y_grid[MAX_SH_ORDER];                 /**< real SH basis (real datatype); MAX_NUM_SH_SIGNALS x grid_nDirs */
+    float_complex* Y_grid_cmplx[MAX_SH_ORDER];   /**< real SH basis (complex datatype); MAX_NUM_SH_SIGNALS x grid_nDirs */
+    
+}powermap_codecPars;
+
 /**
  * Main structure for panner. Contains variables for audio buffers, afSTFT,
  * internal variables, flags, user parameters
  */
 typedef struct _panner
 {
-    /* audio buffers */
-    float** inputFrameTD;           /**< Input signals, in the time-domain; #MAX_NUM_INPUTS x #PANNER_FRAME_SIZE */
-    float** outputFrameTD;          /**< Output signals, in the time-domain; #MAX_NUM_OUTPUTS x #PANNER_FRAME_SIZE */
-    float_complex*** inputframeTF;  /**< Input signals, in the time-frequency domain; #HYBRID_BANDS x #MAX_NUM_INPUTS x #TIME_SLOTS */
-    float_complex*** outputframeTF; /**< Output signals, in the time-frequency domain; #HYBRID_BANDS x #MAX_NUM_OUTPUTS x #TIME_SLOTS */
-    int fs;                         /**< Host sampling rate */
-    
-    /* time-frequency transform */
-    float freqVector[HYBRID_BANDS]; /**< Frequency vector (centre frequencies) */
-    void* hSTFT;                    /**< afSTFT handle */
-    
-    /* Internal */
-    int vbapTableRes[2];            /**< [0] azimuth, and [1] elevation grid resolution, in degrees */
-    float* vbap_gtable;             /**< Current VBAP gains; FLAT: N_hrtf_vbap_gtable x nLoudpkrs */
-    int N_vbap_gtable;              /**< Number of directions in the VBAP gain table */
-    float_complex G_src[HYBRID_BANDS][MAX_NUM_INPUTS][MAX_NUM_OUTPUTS];  /**< Current VBAP gains per source */
-    
-    /* flags */
-    CODEC_STATUS codecStatus;       /**< see #CODEC_STATUS */
-    PROC_STATUS procStatus;         /**< see #PROC_STATUS */
-    float progressBar0_1;           /**< Current (re)initialisation progress, between [0..1] */
-    char* progressBarText;          /**< Current (re)initialisation step, string */
-    int recalc_gainsFLAG[MAX_NUM_INPUTS]; /**< 1: VBAP gains need to be recalculated for this source, 0: do not */
-    int recalc_M_rotFLAG;           /**< 1: recalculate the rotation matrix, 0: do not */
-    int reInitGainTables;           /**< 1: reinitialise the VBAP gain table, 0: do not */
-    
-    /* misc. */
-    float src_dirs_rot_deg[MAX_NUM_INPUTS][2]; /**< Intermediate rotated source directions, in degrees */
-    float src_dirs_rot_xyz[MAX_NUM_INPUTS][3]; /**< Intermediate rotated source directions, as unit-length Cartesian coordinates */
-    float src_dirs_xyz[MAX_NUM_INPUTS][3];     /**< Intermediate source directions, as unit-length Cartesian coordinates */
-    int nTriangles;                 /**< Number of loudspeaker triangles */
-    int output_nDims;               /**< Dimensionality of the loudspeaker array, 2: 2-D, 3: 3-D */
     int new_nLoudpkrs;              /**< New number of loudspeakers in the array */
     int new_nSources;               /**< New number of inputs/sources */
     
-    /* pValue */
-    float pValue[HYBRID_BANDS];     /**< Used for the frequency-dependent panning normalisation */
     
     /* user parameters */
     int nSources;                   /**< Current number of inputs/sources */
     float src_dirs_deg[MAX_NUM_INPUTS][2]; /**< Current source directions */
-    float DTT;                      /**< Room coefficient [3] */
-    float spread_deg;               /**< Source spread/MDAP [2] */
     int nLoudpkrs;                  /**< Current number of loudspeakers in the array */
     float loudpkrs_dirs_deg[MAX_NUM_OUTPUTS][3]; /**< Current loudspeaker directions */
-    float yaw;                      /**< yaw (Euler) rotation angle, in degrees */
-    float roll;                     /**< roll (Euler) rotation angle, in degrees */
-    float pitch;                    /**< pitch (Euler) rotation angle, in degrees */
-    int bFlipYaw;                   /**< flag to flip the sign of the yaw rotation angle */
-    int bFlipPitch;                 /**< flag to flip the sign of the pitch rotation angle */
-    int bFlipRoll;                  /**< flag to flip the sign of the roll rotation angle */
+
+
+
+
+    /* FIFO buffers */
+    int FIFO_idx;                   /**< FIFO buffer index */
+    float inFIFO[MAX_NUM_SH_SIGNALS][PANNER_FRAME_SIZE]; /**< Input FIFO buffer */
+
+    /* TFT */
+    float** SHframeTD;              /**< time-domain SH input frame; #MAX_NUM_SH_SIGNALS x #POWERMAP_FRAME_SIZE */
+    float_complex*** SHframeTF;     /**< time-frequency domain SH input frame; #HYBRID_BANDS x #MAX_NUM_SH_SIGNALS x #TIME_SLOTS */
+    void* hSTFT;                    /**< afSTFT handle */
+    void* spPWD;                    /**< sphPWD handle */
+    float freqVector[HYBRID_BANDS]; /**< Frequency vector (filterbank centre frequencies) */
+    float fs;                       /**< Host sample rate, in Hz*/
+
+    /* internal */
+    float_complex Cx[HYBRID_BANDS][MAX_NUM_SH_SIGNALS * MAX_NUM_SH_SIGNALS];     /**< covariance matrices per band */
+    int new_masterOrder;            /**< New maximum/master SH analysis order (current value will be replaced by this after next re-init) */
+    int dispWidth;                  /**< Number of pixels on the horizontal in the 2D interpolated powermap image */
+
+    /* ana configuration */
+    CODEC_STATUS codecStatus;       /**< see #CODEC_STATUS */
+    PROC_STATUS procStatus;         /**< see #PROC_STATUS */
+    float progressBar0_1;           /**< Current (re)initialisation progress, between [0..1] */
+    char* progressBarText;          /**< Current (re)initialisation step, string */
+    powermap_codecPars* pars;       /**< codec parameters */
+
+    /* display */
+    float* pmap;                    /**< grid_nDirs x 1 */
+    float* prev_pmap;               /**< grid_nDirs x 1 */
+    float* pmap_grid[NUM_DISP_SLOTS]; /**< powermap interpolated to grid; interp_nDirs x 1 */
+    int dispSlotIdx;                /**< Current display slot */
+    float pmap_grid_minVal;         /**< Current minimum value in pmap (used to normalise [0..1]) */
+    float pmap_grid_maxVal;         /**< Current maximum value in pmap (used to normalise [0..1]) */
+    int recalcPmap;                 /**< set this to 1 to generate a new powermap */
+    int pmapReady;                  /**< 0: powermap not started yet, 1: powermap is ready for plotting*/
+
+    /* User parameters */
+    int masterOrder;                /**< Current maximum/master SH analysis order */
+    int analysisOrderPerBand[HYBRID_BANDS]; /**< SH analysis order per frequency band */
+    float pmapEQ[HYBRID_BANDS];     /**< Equalisation/weights per band */
+    HFOV_OPTIONS HFOVoption;        /**< see #HFOV_OPTIONS */
+    ASPECT_RATIO_OPTIONS aspectRatioOption; /**< see #ASPECT_RATIO_OPTIONS */
+    float covAvgCoeff;              /**< Covariance matrix averaging coefficient, [0..1] */
+    float pmapAvgCoeff;             /**< Powermap averaging coefficient, [0..1] */
+    CH_ORDER chOrdering;            /**< Ambisonic channel order convention (see #CH_ORDER) */
+    NORM_TYPES norm;                /**< Ambisonic normalisation convention (see #NORM_TYPES) */
+    int maxInd;
+    int loudNumber;
+    float maxEnergy;
     
 } panner_data;
      
@@ -162,7 +188,6 @@ void panner_setCodecStatus(void* const hPan, CODEC_STATUS newStatus);
  *
  * @note Call ambi_dec_initTFT() (if needed) before calling this function
  */
-void panner_initGainTables(void* const hPan);
     
 /**
  * Initialise the filterbank used by panner.
@@ -171,6 +196,9 @@ void panner_initGainTables(void* const hPan);
  */
 void panner_initTFT(void* const hPan);
     
+void panner_initAna(void* const hPan);
+
+
 /**
  * Loads source directions from preset
  *
@@ -192,10 +220,7 @@ void panner_loadSourcePreset(SOURCE_CONFIG_PRESETS preset,
  * @param[out] newNCH   (&) new number of channels
  * @param[out] nDims    (&) estimate of the number of dimensions (2 or 3)
  */
-void panner_loadLoudspeakerPreset(LOUDSPEAKER_ARRAY_PRESETS preset,
-                                  float dirs_deg[MAX_NUM_INPUTS][2],
-                                  int* newNCH,
-                                  int* nDims);
+
 
 
 #ifdef __cplusplus

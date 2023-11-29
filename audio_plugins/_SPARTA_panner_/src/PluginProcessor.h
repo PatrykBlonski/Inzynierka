@@ -27,6 +27,7 @@
 #define CONFIGURATIONHELPER_ENABLE_GENERICLAYOUT_METHODS 1
 #include "../../resources/ConfigurationHelper.h"
 #include <thread>
+#include "kiss_fft.h"
 #define BUILD_VER_SUFFIX ""  /* String to be added before the version name on the GUI (e.g. beta, alpha etc..) */
 #ifndef MIN
 # define MIN(a,b) (( (a) < (b) ) ? (a) : (b))
@@ -59,6 +60,7 @@ class PluginProcessor  : public AudioProcessor,
 public:
     AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
     AudioBuffer<float> ImpulseBuffer;
+    AudioBuffer<float> SweepBuffer;
     //AudioProcessorValueTreeState parameters;
     /* Get functions */
     void* getFXHandle() { return hPan; }
@@ -104,8 +106,8 @@ private:
     double phase = 0.0;        // Phase for our sine wave generation
     double frequency = 20.0;   // Starting frequency
     const double startFrequency = 20.0;
-    const double endFrequency = 20000.0;
-    const double duration = 5.0;   // Duration in seconds
+    const double endFrequency = 24000.0;
+    const double duration = 10.0;   // Duration in seconds
     double timeElapsed = 0.0;  // Keep track of how long the sweep has been playing
     bool isRecording = false;
     int currentRecordingPosition = 0;
@@ -114,6 +116,7 @@ private:
     dsp::Convolution convolution2;
     dsp::Convolution convolution3;
     dsp::Convolution convolution4;
+    int latency = 0;
 
 
     void timerCallback(int timerID) override
@@ -146,10 +149,11 @@ public:
     void PluginProcessor::startCalibration();
     void PluginProcessor::endCalibration();
     void PluginProcessor::generateSine(const double deltaT, AudioBuffer<float>& buffer);
-    void PluginProcessor::saveBufferToWav(AudioBuffer<float>& buffer);
+    void PluginProcessor::saveBufferToWav(AudioBuffer<float>& buffer, const String& path);
     AudioBuffer<float> loadImpulseResponse(const String& filePath);
     void loadImpulseResponse();
     void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum);
+    void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer);
 
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
