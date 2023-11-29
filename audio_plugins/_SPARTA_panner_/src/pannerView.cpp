@@ -25,7 +25,7 @@
 
 
 //[MiscUserDefs] You can add your own user definitions and misc code here...
-const float icon_size = 8.0f;
+const float icon_size = 10.0f;
 
 
 //[/MiscUserDefs]
@@ -88,7 +88,7 @@ void pannerView::paint (juce::Graphics& g)
     //[/UserPrePaint]
 
     {
-        int x = 0, y = 0, width = 480, height = 460;
+        int x = 0, y = 0, width = 460, height = 460;
         juce::Colour fillColour1 = juce::Colour (0xff4e4e4e), fillColour2 = juce::Colour (0xff202020);
         juce::Colour strokeColour = juce::Colour (0xff9e9e9e);
         //[UserPaintCustomArguments] Customize the painting arguments here..
@@ -256,17 +256,17 @@ void pannerView::refreshPanView()
 
     //TEST
 
-    panner_setLoudspeakerAzi_deg(hPan, 0, 66.0f);
-    panner_setLoudspeakerDist_deg(hPan, 0, 5.0f);
-    panner_setLoudspeakerElev_deg(hPan, 0, 2.0f);
+    //panner_setLoudspeakerAzi_deg(hPan, 0, 66.0f);
+    //panner_setLoudspeakerDist_deg(hPan, 0, 5.0f);
+    //panner_setLoudspeakerElev_deg(hPan, 0, 2.0f);
 
-    panner_setLoudspeakerAzi_deg(hPan, 1, 31.0f);
-    panner_setLoudspeakerDist_deg(hPan, 1, 3.0f);
-    panner_setLoudspeakerElev_deg(hPan, 1, 3.0f);
+    //panner_setLoudspeakerAzi_deg(hPan, 1, 31.0f);
+    //panner_setLoudspeakerDist_deg(hPan, 1, 3.0f);
+    //panner_setLoudspeakerElev_deg(hPan, 1, 3.0f);
 
-    panner_setLoudspeakerAzi_deg(hPan, 2, 98.0f);
-    panner_setLoudspeakerDist_deg(hPan, 2, 9.0f);
-    panner_setLoudspeakerElev_deg(hPan, 2, 2.0f);
+    //panner_setLoudspeakerAzi_deg(hPan, 2, 98.0f);
+    //panner_setLoudspeakerDist_deg(hPan, 2, 9.0f);
+    //panner_setLoudspeakerElev_deg(hPan, 2, 2.0f);
 
     for(int ls=0; ls<NLoudspeakers; ls++){
         calculateCoordinates(panner_getLoudspeakerDist_deg(hPan, ls), panner_getLoudspeakerAzi_deg(hPan, ls), &x, &y);

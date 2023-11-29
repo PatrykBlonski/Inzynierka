@@ -47,7 +47,7 @@ typedef enum {
 } SH_ORDERS;
     
 /** Maximum supported Ambisonic order */
-#define MAX_SH_ORDER ( 7 )
+#define MAX_SH_ORDER ( 1 )
     
 /**
  * Available Ambisonic channel ordering conventions

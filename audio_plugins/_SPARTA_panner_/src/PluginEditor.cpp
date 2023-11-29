@@ -94,7 +94,27 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     tb_calibration->addListener (this);
     tb_calibration->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff3c393c));
 
-    tb_calibration->setBounds (56, 168, 104, 32);
+    tb_calibration->setBounds (56, 256, 104, 32);
+
+    CBformat.reset (new juce::ComboBox ("new combo box"));
+    addAndMakeVisible (CBformat.get());
+    CBformat->setEditableText (false);
+    CBformat->setJustificationType (juce::Justification::centredLeft);
+    CBformat->setTextWhenNothingSelected (juce::String());
+    CBformat->setTextWhenNoChoicesAvailable (TRANS("(no choices)"));
+    CBformat->addListener (this);
+
+    CBformat->setBounds (96, 176, 86, 24);
+
+    CBnorm.reset (new juce::ComboBox ("new combo box"));
+    addAndMakeVisible (CBnorm.get());
+    CBnorm->setEditableText (false);
+    CBnorm->setJustificationType (juce::Justification::centredLeft);
+    CBnorm->setTextWhenNothingSelected (juce::String());
+    CBnorm->setTextWhenNoChoicesAvailable (TRANS("(no choices)"));
+    CBnorm->addListener (this);
+
+    CBnorm->setBounds (96, 208, 86, 24);
 
 
     //[UserPreSize]
@@ -166,6 +186,12 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     CBsourceDirsPreset->addItem (TRANS("SphCov (49)"), SOURCE_CONFIG_PRESET_SPH_COV_49);
     CBsourceDirsPreset->addItem (TRANS("SphCov (64)"), SOURCE_CONFIG_PRESET_SPH_COV_64);
 
+
+    CBformat->addItem(TRANS("ACN"), CH_ACN);
+    CBformat->addItem(TRANS("FuMa"), CH_FUMA);
+    CBnorm->addItem(TRANS("N3D"), NORM_N3D);
+    CBnorm->addItem(TRANS("SN3D"), NORM_SN3D);
+    CBnorm->addItem(TRANS("FuMa"), NORM_FUMA);
     /* add Loudspeaker preset options */
 
     /* ProgressBar */
@@ -188,6 +214,12 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     /* grab current parameter settings */
     SL_num_sources->setValue(panner_getNumSources(hPan),dontSendNotification);
     TB_showOutputs->setToggleState(true, dontSendNotification);
+
+    CBformat->setSelectedId(panner_getChOrder(hPan), dontSendNotification);
+    CBnorm->setSelectedId(panner_getNormType(hPan), dontSendNotification);
+    CBformat->setItemEnabled(CH_FUMA, true);
+    CBnorm->setItemEnabled(NORM_FUMA, true);
+
 
     /* create panning window */
     panWindow.reset (new pannerView(ownerFilter, 460, 460));
@@ -231,6 +263,8 @@ PluginEditor::~PluginEditor()
     tb_loadJSON_src = nullptr;
     tb_saveJSON_ls = nullptr;
     tb_calibration = nullptr;
+    CBformat = nullptr;
+    CBnorm = nullptr;
 
 
     //[Destructor]. You can add your own custom destruction code here..
@@ -519,6 +553,30 @@ void PluginEditor::paint (juce::Graphics& g)
 
     }
 
+    {
+        int x = 32, y = 204, width = 52, height = 30;
+        juce::String text (TRANS("Norm:"));
+        juce::Colour fillColour = juce::Colours::white;
+        //[UserPaintCustomArguments] Customize the painting arguments here..
+        //[/UserPaintCustomArguments]
+        g.setColour (fillColour);
+        g.setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Bold"));
+        g.drawText (text, x, y, width, height,
+                    juce::Justification::centredLeft, true);
+    }
+
+    {
+        int x = 32, y = 172, width = 60, height = 30;
+        juce::String text (TRANS("Format:"));
+        juce::Colour fillColour = juce::Colours::white;
+        //[UserPaintCustomArguments] Customize the painting arguments here..
+        //[/UserPaintCustomArguments]
+        g.setColour (fillColour);
+        g.setFont (juce::Font (13.00f, juce::Font::plain).withTypefaceStyle ("Bold"));
+        g.drawText (text, x, y, width, height,
+                    juce::Justification::centredLeft, true);
+    }
+
     //[UserPaint] Add your own custom painting code here..
 
 	g.setColour(Colours::white);
@@ -582,6 +640,19 @@ void PluginEditor::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
         refreshPanViewWindow = true;
         //[/UserComboBoxCode_CBsourceDirsPreset]
     }
+    else if (comboBoxThatHasChanged == CBformat.get())
+    {
+        //[UserComboBoxCode_CBformat] -- add your combo box handling code here..
+        panner_setChOrder(hPan, CBformat->getSelectedId());
+        //
+        //[/UserComboBoxCode_CBformat]
+    }
+    else if (comboBoxThatHasChanged == CBnorm.get())
+    {
+        //[UserComboBoxCode_CBnorm] -- add your combo box handling code here..
+        panner_setNormType(hPan, CBnorm->getSelectedId());
+        //[/UserComboBoxCode_CBnorm]
+    }
 
     //[UsercomboBoxChanged_Post]
     //[/UsercomboBoxChanged_Post]
@@ -610,7 +681,7 @@ void PluginEditor::sliderValueChanged (juce::Slider* sliderThatWasMoved)
             panner_setLoudspeakerElev_deg(hPan, i, 0.0f);
             panner_setLoudspeakerDist_deg(hPan, i, 0.0f);
         }
-        
+
         //); panner_setLoudspeakerAzi_deg(hPan, loudspeakerIndex, newValueScaled);
         //[/UserSliderCode_SL_num_loudspeakers]
     }
@@ -735,7 +806,7 @@ void PluginEditor::timerCallback(int timerID)
 
             /* refresh pan view */
             if((refreshPanViewWindow == true) || (panWindow->getSourceIconIsClicked()) ||
-                loudspeakerCoordsView_handle->getHasALabelChanged() || hVst->getRefreshWindow()){
+                loudspeakerCoordsView_handle->getHasALabelChanged() || hVst->getRefreshWindow()) {
                 panWindow->refreshPanView();
                 refreshPanViewWindow = false;
                 loudspeakerCoordsView_handle->setHasALabelChange(false);
@@ -840,6 +911,12 @@ BEGIN_JUCER_METADATA
           strokeColour="solid: ffb9b9b9"/>
     <RECT pos="-3 552 922 2" fill="solid: 61a52a" hasStroke="1" stroke="2, mitered, butt"
           strokeColour="solid: ffb9b9b9"/>
+    <TEXT pos="32 204 52 30" fill="solid: ffffffff" hasStroke="0" text="Norm:"
+          fontname="Default font" fontsize="13.0" kerning="0.0" bold="1"
+          italic="0" justification="33" typefaceStyle="Bold"/>
+    <TEXT pos="32 172 60 30" fill="solid: ffffffff" hasStroke="0" text="Format:"
+          fontname="Default font" fontsize="13.0" kerning="0.0" bold="1"
+          italic="0" justification="33" typefaceStyle="Bold"/>
   </BACKGROUND>
   <COMBOBOX name="new combo box" id="5a2f99f88aa51390" memberName="CBsourceDirsPreset"
             virtualName="" explicitFocusOrder="0" pos="88 66 112 20" editable="0"
@@ -865,8 +942,14 @@ BEGIN_JUCER_METADATA
               bgColOn="ff181f9a" buttonText="Export" connectedEdges="0" needsCallback="1"
               radioGroupId="0"/>
   <TEXTBUTTON name="new button" id="4288576c9eb666b4" memberName="tb_calibration"
-              virtualName="" explicitFocusOrder="0" pos="56 168 104 32" bgColOff="ff3c393c"
+              virtualName="" explicitFocusOrder="0" pos="56 256 104 32" bgColOff="ff3c393c"
               buttonText="Calibrate" connectedEdges="3" needsCallback="1" radioGroupId="0"/>
+  <COMBOBOX name="new combo box" id="4dbb6b6d45e1785a" memberName="CBformat"
+            virtualName="" explicitFocusOrder="0" pos="96 176 86 24" editable="0"
+            layout="33" items="" textWhenNonSelected="" textWhenNoItems="(no choices)"/>
+  <COMBOBOX name="new combo box" id="4bdc869e5df85336" memberName="CBnorm"
+            virtualName="" explicitFocusOrder="0" pos="96 208 86 24" editable="0"
+            layout="33" items="" textWhenNonSelected="" textWhenNoItems="(no choices)"/>
 </JUCER_COMPONENT>
 
 END_JUCER_METADATA
