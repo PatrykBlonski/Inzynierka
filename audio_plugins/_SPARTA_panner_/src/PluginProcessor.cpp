@@ -92,9 +92,9 @@ void PluginProcessor::startCalibration() {
     recordingBuffer.setSize(panner_getNumSources(hPan), getSampleRate() * duration);
     recordingBuffer.clear();
     loudspeakerNumber = 0;
-   // juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    juce::String juceStringPath = "C:\\Users\\igosie\\Downloads\\sound\\test15_2\\recorded_audio_mic_" + juce::String(loudspeakerNumber) + ".wav";
    //// std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
-   // ImpulseBuffer = loadImpulseResponse(juceStringPath);
+    ImpulseBuffer = loadImpulseResponse(juceStringPath);
     currentRecordingPosition = 0;
     calibrating = true;
     //phase = 0.0;
@@ -111,17 +111,25 @@ void PluginProcessor::endCalibration() {
     saveBufferToWav(recordingBuffer, fileName);
    /* fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);*/
-    distanceCalculation(SweepBuffer, recordingBuffer, loudspeakerNumber);
-    panner_process(hPan, recordingBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
+
+    //juce::String juceStringPath = "C:\\Users\\igosie\\Downloads\\drive-download-20231223T102624Z-001\\test15_2" + juce::String(loudspeakerNumber) + ".wav";
+    //recordingBuffer = loadImpulseResponse(juceStringPath);
+    distanceCalculation(SweepBuffer, ImpulseBuffer, loudspeakerNumber); //zamiast recroding buffer -> wczytac pliki z nagraniami
+
+    //panner_process(hPan, recordingBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
     refreshWindow = true;
 
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
-       /* ImpulseBuffer.clear();
-        std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_") + std::to_string(loudspeakerNumber) + ".wav";
+        ImpulseBuffer.clear();
+         juce::String juceStringPath = "C:\\Users\\igosie\\Downloads\\C_resposne" + juce::String(loudspeakerNumber) + ".wav";
+        ImpulseBuffer = loadImpulseResponse(juceStringPath);
+
+
+        /*std::string stdStringPath = std::string("D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_") + std::to_string(loudspeakerNumber) + ".wav";
         juce::String juceStringPath(stdStringPath);
-        ImpulseBuffer = loadImpulseResponse(juceStringPath);*/
-        recordingBuffer.clear();
+        ImpulseBuffer = loadImpulseResponse(juceStringPath);
+        recordingBuffer.clear();*/
         //phase = 0.0;
         //timeElapsed = 0.0;
         //frequency = startFrequency;
@@ -450,89 +458,226 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
 }
 
 void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum)
-{
-    // Check if buffers are valid and have the same number of samples
-    jassert(sweep.getNumSamples() == input.getNumSamples());
-   // jassert(sweep.getNumChannels() > 0 && input.getNumChannels() > 0);
+{   //KISS FFT
 
     const int numOfSamples = sweep.getNumSamples();
     const int fftSize = nextPowerOfTwo(numOfSamples); //finding next power of 2 for FFT calc
-    juce::dsp::FFT fft((int)std::log2(fftSize));         
 
-    // Allocate space for the FFT data
-    HeapBlock<float> sweepFFTData(fftSize * 2, true); // Initialize to zero
-    HeapBlock<float> inputFFTData(fftSize * 2, true); // Initialize to zero
+    kiss_fft_cfg fft_cfg = kiss_fft_alloc(fftSize, 0, nullptr, nullptr);
+    kiss_fft_cfg ifft_cfg = kiss_fft_alloc(fftSize, 1, nullptr, nullptr);
 
-    // Copy input data to the fftData's real part
-    const float* sweepSamples = sweep.getReadPointer(0);
-    const float* inputSamples = input.getReadPointer(0);
+    std::vector<kiss_fft_cpx> kiss_sweep_in(fftSize);
+    std::vector<kiss_fft_cpx> kiss_sweep_out(fftSize);
+    std::vector<kiss_fft_cpx> kiss_input_in(fftSize);
+    std::vector<kiss_fft_cpx> kiss_input_out(fftSize);
 
-    // Prepare the data for FFT
-    for (int i = 0; i < numOfSamples; ++i)
-    {
-        sweepFFTData[i] = sweepSamples[i];
-        inputFFTData[i] = inputSamples[i];
+    for (int i = 0; i < numOfSamples; ++i) {
+        kiss_sweep_in[i].r = sweep.getSample(0, i);
+        kiss_sweep_in[i].i = 0.0f;
+
+        kiss_input_in[i].r = input.getSample(0, i);
+        kiss_input_in[i].i = 0.0f;
+    }
+    // Zero-pad the rest if needed
+    for (int i = numOfSamples; i < fftSize; ++i) {
+        kiss_sweep_in[i].r = 0.0f;
+        kiss_sweep_in[i].i = 0.0f;
+
+        kiss_input_in[i].r = 0.0f;
+        kiss_input_in[i].i = 0.0f;
     }
 
-    // Perform the FFT in-place
-    fft.performFrequencyOnlyForwardTransform(sweepFFTData);
-    fft.performFrequencyOnlyForwardTransform(inputFFTData);
+    kiss_fft(fft_cfg, kiss_sweep_in.data(), kiss_sweep_out.data());
+    kiss_fft(fft_cfg, kiss_input_in.data(), kiss_input_out.data());
 
-    // Allocate space for the result of the division (transfer function)
-    HeapBlock<juce::dsp::Complex<float>> transferFunctionFFTData(fftSize, true); // Initialize to zero
-    
-    // Perform the division in the frequency domain with regularization
     const float epsilon = 1e-3f; // Threshold to prevent division by very small numbers
-    for (int i = 0; i < fftSize; ++i)
-    {
-        juce::dsp::Complex<float> sweepValue(sweepFFTData[i * 2], sweepFFTData[i * 2 + 1]);
-        juce::dsp::Complex<float> inputValue(inputFFTData[i * 2], inputFFTData[i * 2 + 1]);
 
-        if (std::abs(sweepValue) > epsilon)
-        {
-            transferFunctionFFTData[i] = inputValue / sweepValue;
+    for (int i = 0; i < fftSize; ++i) {
+        if (std::abs(kiss_sweep_out[i].r) > epsilon || std::abs(kiss_sweep_out[i].i) > epsilon) {
+            // Perform the division
+            kiss_input_in[i].r = (kiss_input_out[i].r * kiss_sweep_out[i].r + kiss_input_out[i].i * kiss_sweep_out[i].i) /
+                (kiss_sweep_out[i].r * kiss_sweep_out[i].r + kiss_sweep_out[i].i * kiss_sweep_out[i].i);
+            kiss_input_in[i].i = (kiss_input_out[i].i * kiss_sweep_out[i].r - kiss_input_out[i].r * kiss_sweep_out[i].i) /
+                (kiss_sweep_out[i].r * kiss_sweep_out[i].r + kiss_sweep_out[i].i * kiss_sweep_out[i].i);
         }
-        else
-        {
-            transferFunctionFFTData[i] = juce::dsp::Complex<float>(0.0f, 0.0f); // Regularization
+        else {
+            // Regularization
+            kiss_input_in[i].r = 0.0f;
+            kiss_input_in[i].i = 0.0f;
         }
     }
 
-    // Prepare buffer for inverse FFT result (time domain)
-    HeapBlock<float> estimatedIRData(fftSize * 2, true); // Initialize to zero
+    kiss_fft(ifft_cfg, kiss_input_in.data(), kiss_input_out.data());
 
-    // Prepare data for inverse FFT
-    for (int i = 0; i < fftSize; ++i)
-    {
-        estimatedIRData[i * 2] = transferFunctionFFTData[i].real();
-        estimatedIRData[i * 2 + 1] = transferFunctionFFTData[i].imag();
-    }
+    // Create an AudioBuffer to store the impulse response
+    AudioBuffer<float> impulseResponse(1, fftSize);
 
-    // Perform the inverse FFT
-    fft.performRealOnlyInverseTransform(estimatedIRData);
-
-    // Find the peak in the impulse response to determine the time of arrival
+    //Variables for fiding time
     float peakTime = 0.0f;
     float maxVal = std::numeric_limits<float>::lowest();
-    AudioBuffer<float> impulseResponse;
-    impulseResponse.setSize(1, fftSize);
+    int peakIndex = 0;  // Index of the peak value
 
-    for (int i = 1; i < fftSize - 1; ++i)
-    {
-        float val = estimatedIRData[i * 2]; // We only need the real part
-        impulseResponse.setSample(0, i - 1, val);
-        if (val > maxVal)
+    for (int i = 0; i < fftSize; ++i) {
+        impulseResponse.setSample(0, i, kiss_input_out[i].r);
+
+        float currentVal = kiss_input_out[i].r;
+        if (std::abs(currentVal) > maxVal) 
         {
-            maxVal = val; //finding peak Value
-            peakTime = (float)i / 48000.0f; //const sampling rate
+            maxVal = std::abs(currentVal);
+            peakIndex = i; // Update index of the peak value
         }
     }
+
+    kiss_fft_free(fft_cfg);
+    kiss_fft_free(ifft_cfg);
+
     juce::String fileName = "impulse_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(impulseResponse, fileName);
-    // Calculate the distance using the time of arrival and the speed of sound
-    const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
-    float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+
+    peakTime = static_cast<float>(peakIndex) / static_cast<float>(48000); // Use actual sample rate
+
+    const float speedOfSound = 343.0f; 
+    float distance = peakTime * speedOfSound; 
+
     panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+
+
+    // Check if buffers are valid and have the same number of samples
+    //jassert(sweep.getNumSamples() == input.getNumSamples());
+
+
+
+    //const int numOfSamples = sweep.getNumSamples();
+    //const int fftSize = nextPowerOfTwo(numOfSamples); //finding next power of 2 for FFT calc
+    //juce::dsp::FFT fft((int)std::log2(fftSize));         
+
+    //// Allocate space for the FFT data
+    //HeapBlock<juce::dsp::Complex<float>> sweepFFTData(fftSize); // Complex data
+    //HeapBlock<juce::dsp::Complex<float>> inputFFTData(fftSize); // Complex data
+
+    //// Prepare the data for FFT
+    //for (int i = 0; i < numOfSamples; ++i) {
+    //    sweepFFTData[i].real(sweep.getSample(0, i)); // Directly using 32-bit float samples
+    //    sweepFFTData[i].imag(0.0f);
+    //    inputFFTData[i].real(input.getSample(0, i));
+    //    inputFFTData[i].imag(0.0f);
+    //}
+
+    //// Write the FFT results to files
+
+    //std::ofstream FFt_data("C:\\Users\\igosie\\Desktop\\fftData.txt");
+    //for (int i = 0; i < 1000; ++i) {
+    //    FFt_data << "Sweep FFT data [" << i << "]: "
+    //        << sweepFFTData[i].real() << " + " << sweepFFTData[i].imag() << "j\n";
+    //}
+    //FFt_data.close();
+
+
+    //// Allocate space for the FFT output
+    //HeapBlock<juce::dsp::Complex<float>> sweepFFTOutput(fftSize);
+    //HeapBlock<juce::dsp::Complex<float>> inputFFTOutput(fftSize);
+
+    //// Perform the forward FFT
+    //fft.perform(sweepFFTData, sweepFFTOutput, false);
+    //fft.perform(inputFFTData, inputFFTOutput, false);
+
+
+
+    ////Step 3
+    //// Write the FFT results to files
+    //std::ofstream sweepFftFile("C:\\Users\\igosie\\Desktop\\sweep_fft_result.txt");
+    //std::ofstream inputFftFile("C:\\Users\\igosie\\Desktop\\input_fft_result.txt");
+
+    //for (int i = 0; i < 100; ++i) {
+    //    sweepFftFile << "Sweep FFT result [" << i << "]: "
+    //        << sweepFFTOutput[i].real() << " + " << sweepFFTOutput[i].imag() << "j\n";
+    //    inputFftFile << "Input FFT result [" << i << "]: "
+    //        << inputFFTOutput[i].real() << " + " << inputFFTOutput[i].imag() << "j\n";
+    //}
+
+    //sweepFftFile.close();
+    //inputFftFile.close();
+
+    //// Perform the division in the frequency domain with regularization
+    //const float epsilon = 1e-3f; // Threshold to prevent division by very small numbers
+    //for (int i = 0; i < fftSize; ++i)
+    //{
+    //    if (std::abs(sweepFFTData[i]) > epsilon)
+    //    {
+    //        inputFFTData[i] /= sweepFFTData[i];
+    //    }
+    //    else
+    //    {
+    //        inputFFTData[i] = { 0.0f, 0.0f }; // Regularization
+    //    }
+    //}
+
+    //// Allocate space for the output of the inverse FFT
+    //HeapBlock<juce::dsp::Complex<float>> ifftOutput(fftSize);
+
+    //// Perform the inverse FFT
+    //fft.perform(inputFFTData, ifftOutput, true);
+
+    //// Process the output to find the peak in the impulse response
+    //float peakTime = 0.0f;
+    //float maxVal = std::numeric_limits<float>::lowest();
+    //AudioBuffer<float> impulseResponse;
+    //impulseResponse.setSize(1, fftSize);
+
+    //for (int i = 0; i < fftSize; ++i)
+    //{
+    //    float val = ifftOutput[i].real(); // Assuming you are interested in the real part
+    //    impulseResponse.setSample(0, i, val);
+    //    if (val > maxVal)
+    //    {
+    //        maxVal = val; // Finding peak value
+    //        peakTime = static_cast<float>(i) / static_cast<float>(48000.0f); // Use the actual sample rate
+    //    }
+    //}
+    //juce::String fileName = "impulse_" + juce::String(loudspeakerNumber) + ".wav";
+    //saveBufferToWav(impulseResponse, fileName);
+    //// Calculate the distance using the time of arrival and the speed of sound
+    //const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
+    //float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+    //panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+
+    ////xx
+
+    //// Prepare buffer for inverse FFT result (time domain)
+    //HeapBlock<float> estimatedIRData(fftSize * 2, true); // Initialize to zero
+
+    //// Prepare data for inverse FFT
+    //for (int i = 0; i < fftSize; ++i)
+    //{
+    //    estimatedIRData[i * 2] = transferFunctionFFTData[i].real();
+    //    estimatedIRData[i * 2 + 1] = transferFunctionFFTData[i].imag();
+    //}
+
+    //// Perform the inverse FFT
+    //fft.performRealOnlyInverseTransform(estimatedIRData);
+
+    //// Find the peak in the impulse response to determine the time of arrival
+    //float peakTime = 0.0f;
+    //float maxVal = std::numeric_limits<float>::lowest();
+    //AudioBuffer<float> impulseResponse;
+    //impulseResponse.setSize(1, fftSize);
+
+    //for (int i = 1; i < fftSize - 1; ++i)
+    //{
+    //    float val = estimatedIRData[i * 2]; // We only need the real part
+    //    impulseResponse.setSample(0, i - 1, val);
+    //    if (val > maxVal)
+    //    {
+    //        maxVal = val; //finding peak Value
+    //        peakTime = (float)i / 48000.0f; //const sampling rate
+    //    }
+    //}
+    //juce::String fileName = "impulse_" + juce::String(loudspeakerNumber) + ".wav";
+    //saveBufferToWav(impulseResponse, fileName);
+    //// Calculate the distance using the time of arrival and the speed of sound
+    //const float speedOfSound = 343.0f; // Speed of sound in m/s at 20 degrees Celsius
+    //float distance = peakTime * speedOfSound; //results 2.2m-2.6m
+    //panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
 }
 
 

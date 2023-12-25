@@ -24,9 +24,11 @@
 
 #include <JuceHeader.h>
 #include "panner.h"
+#include <fstream>
 #define CONFIGURATIONHELPER_ENABLE_GENERICLAYOUT_METHODS 1
 #include "../../resources/ConfigurationHelper.h"
 #include <thread>
+#include "kiss_fft.h"
 #define BUILD_VER_SUFFIX ""  /* String to be added before the version name on the GUI (e.g. beta, alpha etc..) */
 #ifndef MIN
 # define MIN(a,b) (( (a) < (b) ) ? (a) : (b))
