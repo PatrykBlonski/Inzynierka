@@ -35,15 +35,15 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     //[Constructor_pre] You can add your own custom stuff here..
     //[/Constructor_pre]
 
-    CBsourceDirsPreset.reset (new juce::ComboBox ("new combo box"));
-    addAndMakeVisible (CBsourceDirsPreset.get());
-    CBsourceDirsPreset->setEditableText (false);
-    CBsourceDirsPreset->setJustificationType (juce::Justification::centredLeft);
-    CBsourceDirsPreset->setTextWhenNothingSelected (juce::String());
-    CBsourceDirsPreset->setTextWhenNoChoicesAvailable (TRANS("(no choices)"));
-    CBsourceDirsPreset->addListener (this);
+    //CBsourceDirsPreset.reset (new juce::ComboBox ("new combo box"));
+    //addAndMakeVisible (CBsourceDirsPreset.get());
+    //CBsourceDirsPreset->setEditableText (false);
+    //CBsourceDirsPreset->setJustificationType (juce::Justification::centredLeft);
+    //CBsourceDirsPreset->setTextWhenNothingSelected (juce::String());
+    //CBsourceDirsPreset->setTextWhenNoChoicesAvailable (TRANS("(no choices)"));
+    //CBsourceDirsPreset->addListener (this);
 
-    CBsourceDirsPreset->setBounds (88, 66, 112, 20);
+    //CBsourceDirsPreset->setBounds (88, 66, 112, 20);
 
     SL_num_sources.reset (new juce::Slider ("new slider"));
     addAndMakeVisible (SL_num_sources.get());
@@ -70,13 +70,13 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
 
     SL_num_loudspeakers->setBounds (856, 72, 40, 20);
 
-    tb_loadJSON_src.reset (new juce::TextButton ("new button"));
-    addAndMakeVisible (tb_loadJSON_src.get());
-    tb_loadJSON_src->setButtonText (TRANS("Import"));
-    tb_loadJSON_src->addListener (this);
-    tb_loadJSON_src->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff14889e));
+    //tb_loadJSON_src.reset (new juce::TextButton ("new button"));
+    //addAndMakeVisible (tb_loadJSON_src.get());
+    //tb_loadJSON_src->setButtonText (TRANS("Import"));
+    //tb_loadJSON_src->addListener (this);
+    //tb_loadJSON_src->setColour (juce::TextButton::buttonColourId, juce::Colour (0xff14889e));
 
-    tb_loadJSON_src->setBounds (140, 41, 34, 14);
+    //tb_loadJSON_src->setBounds (140, 41, 34, 14);
 
     tb_saveJSON_ls.reset (new juce::TextButton ("new button"));
     addAndMakeVisible (tb_saveJSON_ls.get());
@@ -156,35 +156,35 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     SL_num_loudspeakers->setSliderStyle(Slider::SliderStyle::LinearBarVertical);
     SL_num_loudspeakers->setSliderSnapsToMousePosition(false);
 
-    /* add source preset options */
-    CBsourceDirsPreset->addItem (TRANS("Mono"), SOURCE_CONFIG_PRESET_MONO);
-    CBsourceDirsPreset->addItem (TRANS("Stereo"), SOURCE_CONFIG_PRESET_STEREO);
-    CBsourceDirsPreset->addItem (TRANS("5.x"), SOURCE_CONFIG_PRESET_5PX);
-    CBsourceDirsPreset->addItem (TRANS("7.x"), SOURCE_CONFIG_PRESET_7PX);
-    CBsourceDirsPreset->addItem (TRANS("8.x"), SOURCE_CONFIG_PRESET_8PX);
-    CBsourceDirsPreset->addItem (TRANS("9.x"), SOURCE_CONFIG_PRESET_9PX);
-    CBsourceDirsPreset->addItem (TRANS("10.x"), SOURCE_CONFIG_PRESET_10PX);
-    CBsourceDirsPreset->addItem (TRANS("11.x"), SOURCE_CONFIG_PRESET_11PX);
-    CBsourceDirsPreset->addItem (TRANS("11.x (7+4)"), SOURCE_CONFIG_PRESET_11PX_7_4);
-    CBsourceDirsPreset->addItem (TRANS("13.x"), SOURCE_CONFIG_PRESET_13PX);
-    CBsourceDirsPreset->addItem (TRANS("22.x"), SOURCE_CONFIG_PRESET_22PX);
-    //CBsourceDirsPreset->addItem (TRANS("9+10+3.2"), SOURCE_CONFIG_ARRAY_PRESET_22P2_9_10_3);
-    CBsourceDirsPreset->addItem (TRANS("Aalto MCC"), SOURCE_CONFIG_PRESET_AALTO_MCC);
-    CBsourceDirsPreset->addItem (TRANS("Aalto MCC-subset"), SOURCE_CONFIG_PRESET_AALTO_MCC_SUBSET);
-    CBsourceDirsPreset->addItem (TRANS("Aalto Apaja"), SOURCE_CONFIG_PRESET_AALTO_APAJA);
-    CBsourceDirsPreset->addItem (TRANS("Aalto LR"), SOURCE_CONFIG_PRESET_AALTO_LR);
-    CBsourceDirsPreset->addItem (TRANS("DTU AVIL"), SOURCE_CONFIG_PRESET_DTU_AVIL);
-    CBsourceDirsPreset->addItem (TRANS("T-design (4)"), SOURCE_CONFIG_PRESET_T_DESIGN_4);
-    CBsourceDirsPreset->addItem (TRANS("T-design (12)"), SOURCE_CONFIG_PRESET_T_DESIGN_12);
-    CBsourceDirsPreset->addItem (TRANS("T-design (24)"), SOURCE_CONFIG_PRESET_T_DESIGN_24);
-    CBsourceDirsPreset->addItem (TRANS("T-design (36)"), SOURCE_CONFIG_PRESET_T_DESIGN_36);
-    CBsourceDirsPreset->addItem (TRANS("T-design (48)"), SOURCE_CONFIG_PRESET_T_DESIGN_48);
-    CBsourceDirsPreset->addItem (TRANS("T-design (60)"), SOURCE_CONFIG_PRESET_T_DESIGN_60);
-    CBsourceDirsPreset->addItem (TRANS("SphCov (9)"), SOURCE_CONFIG_PRESET_SPH_COV_9);
-    CBsourceDirsPreset->addItem (TRANS("SphCov (16)"), SOURCE_CONFIG_PRESET_SPH_COV_16);
-    CBsourceDirsPreset->addItem (TRANS("SphCov (25)"), SOURCE_CONFIG_PRESET_SPH_COV_25);
-    CBsourceDirsPreset->addItem (TRANS("SphCov (49)"), SOURCE_CONFIG_PRESET_SPH_COV_49);
-    CBsourceDirsPreset->addItem (TRANS("SphCov (64)"), SOURCE_CONFIG_PRESET_SPH_COV_64);
+    ///* add source preset options */
+    //CBsourceDirsPreset->addItem (TRANS("Mono"), SOURCE_CONFIG_PRESET_MONO);
+    //CBsourceDirsPreset->addItem (TRANS("Stereo"), SOURCE_CONFIG_PRESET_STEREO);
+    //CBsourceDirsPreset->addItem (TRANS("5.x"), SOURCE_CONFIG_PRESET_5PX);
+    //CBsourceDirsPreset->addItem (TRANS("7.x"), SOURCE_CONFIG_PRESET_7PX);
+    //CBsourceDirsPreset->addItem (TRANS("8.x"), SOURCE_CONFIG_PRESET_8PX);
+    //CBsourceDirsPreset->addItem (TRANS("9.x"), SOURCE_CONFIG_PRESET_9PX);
+    //CBsourceDirsPreset->addItem (TRANS("10.x"), SOURCE_CONFIG_PRESET_10PX);
+    //CBsourceDirsPreset->addItem (TRANS("11.x"), SOURCE_CONFIG_PRESET_11PX);
+    //CBsourceDirsPreset->addItem (TRANS("11.x (7+4)"), SOURCE_CONFIG_PRESET_11PX_7_4);
+    //CBsourceDirsPreset->addItem (TRANS("13.x"), SOURCE_CONFIG_PRESET_13PX);
+    //CBsourceDirsPreset->addItem (TRANS("22.x"), SOURCE_CONFIG_PRESET_22PX);
+    ////CBsourceDirsPreset->addItem (TRANS("9+10+3.2"), SOURCE_CONFIG_ARRAY_PRESET_22P2_9_10_3);
+    //CBsourceDirsPreset->addItem (TRANS("Aalto MCC"), SOURCE_CONFIG_PRESET_AALTO_MCC);
+    //CBsourceDirsPreset->addItem (TRANS("Aalto MCC-subset"), SOURCE_CONFIG_PRESET_AALTO_MCC_SUBSET);
+    //CBsourceDirsPreset->addItem (TRANS("Aalto Apaja"), SOURCE_CONFIG_PRESET_AALTO_APAJA);
+    //CBsourceDirsPreset->addItem (TRANS("Aalto LR"), SOURCE_CONFIG_PRESET_AALTO_LR);
+    //CBsourceDirsPreset->addItem (TRANS("DTU AVIL"), SOURCE_CONFIG_PRESET_DTU_AVIL);
+    //CBsourceDirsPreset->addItem (TRANS("T-design (4)"), SOURCE_CONFIG_PRESET_T_DESIGN_4);
+    //CBsourceDirsPreset->addItem (TRANS("T-design (12)"), SOURCE_CONFIG_PRESET_T_DESIGN_12);
+    //CBsourceDirsPreset->addItem (TRANS("T-design (24)"), SOURCE_CONFIG_PRESET_T_DESIGN_24);
+    //CBsourceDirsPreset->addItem (TRANS("T-design (36)"), SOURCE_CONFIG_PRESET_T_DESIGN_36);
+    //CBsourceDirsPreset->addItem (TRANS("T-design (48)"), SOURCE_CONFIG_PRESET_T_DESIGN_48);
+    //CBsourceDirsPreset->addItem (TRANS("T-design (60)"), SOURCE_CONFIG_PRESET_T_DESIGN_60);
+    //CBsourceDirsPreset->addItem (TRANS("SphCov (9)"), SOURCE_CONFIG_PRESET_SPH_COV_9);
+    //CBsourceDirsPreset->addItem (TRANS("SphCov (16)"), SOURCE_CONFIG_PRESET_SPH_COV_16);
+    //CBsourceDirsPreset->addItem (TRANS("SphCov (25)"), SOURCE_CONFIG_PRESET_SPH_COV_25);
+    //CBsourceDirsPreset->addItem (TRANS("SphCov (49)"), SOURCE_CONFIG_PRESET_SPH_COV_49);
+    //CBsourceDirsPreset->addItem (TRANS("SphCov (64)"), SOURCE_CONFIG_PRESET_SPH_COV_64);
 
 
     CBformat->addItem(TRANS("ACN"), CH_ACN);
@@ -229,9 +229,9 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     refreshPanViewWindow = true;
 
     /* tooltips */
-    CBsourceDirsPreset->setTooltip("Presets for source directions to use for spatialisation.");
+    //CBsourceDirsPreset->setTooltip("Presets for source directions to use for spatialisation.");
     TB_showOutputs->setTooltip("Enables/Disables displaying the loudspeaker directions in the panning window.");
-    tb_loadJSON_src->setTooltip("Loads source directions from a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
+   // tb_loadJSON_src->setTooltip("Loads source directions from a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
     tb_saveJSON_ls->setTooltip("Saves the current loudspeaker directions to a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
 
     /* Plugin description */
@@ -256,11 +256,11 @@ PluginEditor::~PluginEditor()
     //[Destructor_pre]. You can add your own custom destruction code here..
     //[/Destructor_pre]
 
-    CBsourceDirsPreset = nullptr;
+  //  CBsourceDirsPreset = nullptr;
     SL_num_sources = nullptr;
     TB_showOutputs = nullptr;
     SL_num_loudspeakers = nullptr;
-    tb_loadJSON_src = nullptr;
+   // tb_loadJSON_src = nullptr;
     tb_saveJSON_ls = nullptr;
     tb_calibration = nullptr;
     CBformat = nullptr;
@@ -343,17 +343,17 @@ void PluginEditor::paint (juce::Graphics& g)
 
     }
 
-    {
-        int x = 23, y = 58, width = 67, height = 30;
-        juce::String text (TRANS("Presets: "));
-        juce::Colour fillColour = juce::Colours::white;
-        //[UserPaintCustomArguments] Customize the painting arguments here..
-        //[/UserPaintCustomArguments]
-        g.setColour (fillColour);
-        g.setFont (juce::Font (14.50f, juce::Font::plain).withTypefaceStyle ("Bold"));
-        g.drawText (text, x, y, width, height,
-                    juce::Justification::centredLeft, true);
-    }
+    //{
+    //    int x = 23, y = 58, width = 67, height = 30;
+    //    juce::String text (TRANS("Presets: "));
+    //    juce::Colour fillColour = juce::Colours::white;
+    //    //[UserPaintCustomArguments] Customize the painting arguments here..
+    //    //[/UserPaintCustomArguments]
+    //    g.setColour (fillColour);
+    //    g.setFont (juce::Font (14.50f, juce::Font::plain).withTypefaceStyle ("Bold"));
+    //    g.drawText (text, x, y, width, height,
+    //                juce::Justification::centredLeft, true);
+    //}
 
     {
         int x = 220, y = 58, width = 460, height = 460;
@@ -633,14 +633,14 @@ void PluginEditor::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
     //[UsercomboBoxChanged_Pre]
     //[/UsercomboBoxChanged_Pre]
 
-    if (comboBoxThatHasChanged == CBsourceDirsPreset.get())
-    {
-        //[UserComboBoxCode_CBsourceDirsPreset] -- add your combo box handling code here..
-        panner_setInputConfigPreset(hPan, CBsourceDirsPreset->getSelectedId());
-        refreshPanViewWindow = true;
-        //[/UserComboBoxCode_CBsourceDirsPreset]
-    }
-    else if (comboBoxThatHasChanged == CBformat.get())
+    //if (comboBoxThatHasChanged == CBsourceDirsPreset.get())
+    //{
+    //    //[UserComboBoxCode_CBsourceDirsPreset] -- add your combo box handling code here..
+    //    panner_setInputConfigPreset(hPan, CBsourceDirsPreset->getSelectedId());
+    //    refreshPanViewWindow = true;
+    //    //[/UserComboBoxCode_CBsourceDirsPreset]
+    //}
+    if (comboBoxThatHasChanged == CBformat.get())
     {
         //[UserComboBoxCode_CBformat] -- add your combo box handling code here..
         panner_setChOrder(hPan, CBformat->getSelectedId());
@@ -702,23 +702,23 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
         refreshPanViewWindow = true;
         //[/UserButtonCode_TB_showOutputs]
     }
-    else if (buttonThatWasClicked == tb_loadJSON_src.get())
-    {
-        //[UserButtonCode_tb_loadJSON_src] -- add your button handler code here..
-        chooser = std::make_unique<juce::FileChooser> ("Load configuration...",
-                                                       hVst->getLastDir().exists() ? hVst->getLastDir() : File::getSpecialLocation (File::userHomeDirectory),
-                                                       "*.json");
-        auto chooserFlags = juce::FileBrowserComponent::openMode
-                                  | juce::FileBrowserComponent::canSelectFiles;
-        chooser->launchAsync (chooserFlags, [this] (const FileChooser& fc) {
-            auto file = fc.getResult();
-            if (file != File{}){
-                hVst->setLastDir(file.getParentDirectory());
-                hVst->loadConfiguration (file,0);
-            }
-        });
-        //[/UserButtonCode_tb_loadJSON_src]
-    }
+    //else if (buttonThatWasClicked == tb_loadJSON_src.get())
+    //{
+    //    //[UserButtonCode_tb_loadJSON_src] -- add your button handler code here..
+    //    chooser = std::make_unique<juce::FileChooser> ("Load configuration...",
+    //                                                   hVst->getLastDir().exists() ? hVst->getLastDir() : File::getSpecialLocation (File::userHomeDirectory),
+    //                                                   "*.json");
+    //    auto chooserFlags = juce::FileBrowserComponent::openMode
+    //                              | juce::FileBrowserComponent::canSelectFiles;
+    //    chooser->launchAsync (chooserFlags, [this] (const FileChooser& fc) {
+    //        auto file = fc.getResult();
+    //        if (file != File{}){
+    //            hVst->setLastDir(file.getParentDirectory());
+    //            hVst->loadConfiguration (file,0);
+    //        }
+    //    });
+    //    //[/UserButtonCode_tb_loadJSON_src]
+    //}
     else if (buttonThatWasClicked == tb_saveJSON_ls.get())
     {
         //[UserButtonCode_tb_saveJSON_ls] -- add your button handler code here..
@@ -778,28 +778,28 @@ void PluginEditor::timerCallback(int timerID)
 
             /* Some parameters shouldn't be editable during initialisation*/
             if (panner_getCodecStatus(hPan)==CODEC_STATUS_INITIALISING){
-                if(CBsourceDirsPreset->isEnabled())
-                    CBsourceDirsPreset->setEnabled(false);
+                /*if(CBsourceDirsPreset->isEnabled())
+                    CBsourceDirsPreset->setEnabled(false);*/
                 if(SL_num_sources->isEnabled())
                     SL_num_sources->setEnabled(false);
                 if(SL_num_loudspeakers->isEnabled())
                     SL_num_loudspeakers->setEnabled(false);
-                if(tb_loadJSON_src->isEnabled())
-                    tb_loadJSON_src->setEnabled(false);
+                /*if(tb_loadJSON_src->isEnabled())
+                    tb_loadJSON_src->setEnabled(false);*/
                 if(loudspeakerCoordsVP->isEnabled())
                     loudspeakerCoordsVP->setEnabled(false);
             }
             else{
-                if(!CBsourceDirsPreset->isEnabled())
-                    CBsourceDirsPreset->setEnabled(true);
+                /*if(!CBsourceDirsPreset->isEnabled())
+                    CBsourceDirsPreset->setEnabled(true);*/
                 if(!SL_num_sources->isEnabled())
                     SL_num_sources->setEnabled(true);
                 if(hVst->getIsPlaying())
                     SL_num_loudspeakers->setEnabled(false);
                 else if(!SL_num_loudspeakers->isEnabled())
                     SL_num_loudspeakers->setEnabled(true);
-                if(!tb_loadJSON_src->isEnabled())
-                    tb_loadJSON_src->setEnabled(true);
+               /* if(!tb_loadJSON_src->isEnabled())
+                    tb_loadJSON_src->setEnabled(true);*/
                 if(!loudspeakerCoordsVP->isEnabled())
                     loudspeakerCoordsVP->setEnabled(true);
             }

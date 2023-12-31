@@ -98,7 +98,7 @@ void PluginProcessor::startCalibration() {
     recordingBuffer.clear();
     loudspeakerNumber = 0;
     latency = 0;
-    juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\lab_" + juce::String(loudspeakerNumber) + ".wav";
     ImpulseBuffer = loadImpulseResponse(juceStringPath);
     currentRecordingPosition = 0;
     calibrating = true;
@@ -124,7 +124,7 @@ void PluginProcessor::endCalibration() {
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
         latency = 0;
         ImpulseBuffer.clear();
-        juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+        juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\lab_" + juce::String(loudspeakerNumber) + ".wav";
         ImpulseBuffer = loadImpulseResponse(juceStringPath);
         recordingBuffer.clear();
         //phase = 0.0;
