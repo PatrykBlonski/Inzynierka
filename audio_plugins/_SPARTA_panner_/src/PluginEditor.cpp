@@ -663,14 +663,14 @@ void PluginEditor::sliderValueChanged (juce::Slider* sliderThatWasMoved)
     //[UsersliderValueChanged_Pre]
     //[/UsersliderValueChanged_Pre]
 
-    if (sliderThatWasMoved == SL_num_sources.get())
-    {
-        //[UserSliderCode_SL_num_sources] -- add your slider handling code here..
-        panner_setNumSources(hPan, (int)SL_num_sources->getValue());
-        refreshPanViewWindow = true;
-        //[/UserSliderCode_SL_num_sources]
-    }
-    else if (sliderThatWasMoved == SL_num_loudspeakers.get())
+    //if (sliderThatWasMoved == SL_num_sources.get())
+    //{
+    //    //[UserSliderCode_SL_num_sources] -- add your slider handling code here..
+    //    panner_setNumSources(hPan, (int)SL_num_sources->getValue());
+    //    refreshPanViewWindow = true;
+    //    //[/UserSliderCode_SL_num_sources]
+    //}
+    if (sliderThatWasMoved == SL_num_loudspeakers.get())
     {
         //[UserSliderCode_SL_num_loudspeakers] -- add your slider handling code here..
         panner_setNumLoudspeakers(hPan, (int)SL_num_loudspeakers->getValue());
@@ -814,11 +814,11 @@ void PluginEditor::timerCallback(int timerID)
             }
 
             /* display warning message, if needed */
-            if ((hVst->getCurrentBlockSize() % panner_getFrameSize()) != 0){
+          /*  if ((hVst->getCurrentBlockSize() % panner_getFrameSize()) != 0){
                 currentWarning = k_warning_frameSize;
                 repaint(0,0,getWidth(),32);
-            }
-            else if ( !((panner_getDAWsamplerate(hPan) == 44.1e3) || (panner_getDAWsamplerate(hPan) == 48e3)) ){
+            }*/
+            else if ( !((panner_getDAWsamplerate(hPan) == 48e3)) ){
                 currentWarning = k_warning_supported_fs;
                 repaint(0,0,getWidth(),32);
             }

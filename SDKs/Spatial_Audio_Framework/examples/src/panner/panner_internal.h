@@ -61,7 +61,7 @@ extern "C" {
 # if defined(FRAME_SIZE) /* Use the global framesize if it is specified: */
 #  define PANNER_FRAME_SIZE ( FRAME_SIZE )          /**< Framesize, in time-domain samples */
 # else /* Otherwise, the default framesize for this example is: */
-#  define PANNER_FRAME_SIZE ( 480000 )                 /**< Framesize, in time-domain samples */
+#  define PANNER_FRAME_SIZE ( 480256 )                 /**< Framesize, in time-domain samples */
 # endif
 #endif
 #define HOP_SIZE ( 128 )                            /**< STFT hop size */

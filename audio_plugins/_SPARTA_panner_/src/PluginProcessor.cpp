@@ -38,8 +38,8 @@ PluginProcessor::PluginProcessor() :
 	    .withOutput("Output", AudioChannelSet::discreteChannels(64), true))
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
-    refreshWindow = true;
     panner_create(&hPan);
+    refreshWindow = true;
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
@@ -50,7 +50,7 @@ PluginProcessor::~PluginProcessor()
 
 void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer) {
     // Calculate the total number of samples
-    int totalSamples = static_cast<int>(duration * sampleRate);
+    int totalSamples = static_cast<int>(duration * sampleRate + 256);
 
     // Resize the sweepBuffer to hold the sine sweep
     sweepBuffer.setSize(1, totalSamples);  // Assuming mono
@@ -86,20 +86,21 @@ void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<floa
 
 void PluginProcessor::startCalibration() {
     generateSineSweep(48000, SweepBuffer);
-    //juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\source.wav";
-   // std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
-    //SweepBuffer.setSize(1, 480000);
-    //SweepBuffer = loadImpulseResponse(juceStringPath);
+   // juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\source.wav";
+   //// std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
+   // SweepBuffer.setSize(1, 480000+256);
+   // SweepBuffer = loadImpulseResponse(juceStringPath);
 
+    loudspeakerNumber = 0;
     juce::String fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);
-    prepareToPlay(getSampleRate(), 480000);
-    recordingBuffer.setSize(panner_getNumSources(hPan), getSampleRate() * duration);
+    prepareToPlay(getSampleRate(), 480256);
+    recordingBuffer.setSize(panner_getNumSources(hPan), getSampleRate() * duration + 256);
     recordingBuffer.clear();
-    loudspeakerNumber = 0;
     latency = 0;
-    juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\lab_" + juce::String(loudspeakerNumber) + ".wav";
-    ImpulseBuffer = loadImpulseResponse(juceStringPath);
+    // juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    ////juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    //ImpulseBuffer = loadImpulseResponse(juceStringPath);
     currentRecordingPosition = 0;
     calibrating = true;
     //phase = 0.0;
@@ -116,16 +117,16 @@ void PluginProcessor::endCalibration() {
     saveBufferToWav(recordingBuffer, fileName);
    /* fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);*/
-    distanceCalculation(SweepBuffer, ImpulseBuffer, loudspeakerNumber);
-    panner_process(hPan, ImpulseBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), ImpulseBuffer.getNumSamples(), loudspeakerNumber, 1);
-    refreshWindow = true;
+    //distanceCalculation(SweepBuffer, recordingBuffer, loudspeakerNumber);
+    //panner_process(hPan, recordingBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
+    //refreshWindow = true;
 
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
         latency = 0;
-        ImpulseBuffer.clear();
-        juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\lab_" + juce::String(loudspeakerNumber) + ".wav";
-        ImpulseBuffer = loadImpulseResponse(juceStringPath);
+     /*   ImpulseBuffer.clear();
+        juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+        ImpulseBuffer = loadImpulseResponse(juceStringPath);*/
         recordingBuffer.clear();
         //phase = 0.0;
         //timeElapsed = 0.0;
@@ -849,11 +850,11 @@ void PluginProcessor::saveConfigurationToFile (File destination, int srcOrLs)
         break;
     }
     jsonObj = new DynamicObject();
-    jsonObj->setProperty("Name", var("SPARTA Panner source/loudspeaker directions."));
+    jsonObj->setProperty("Name", var("SPARTA Calibration loudspeaker directions."));
     strcpy(versionString, "v");
     strcat(versionString, JucePlugin_VersionString);
-    jsonObj->setProperty("Description", var("This configuration file was created with the SPARTA Panner " + String(versionString) + " plug-in. " + Time::getCurrentTime().toString(true, true)));
-    jsonObj->setProperty ("GenericLayout", ConfigurationHelper::convertElementsToVar (elements, "Source/Loudspeaker Directions"));
+    jsonObj->setProperty("Description", var("This configuration file was created with the SPARTA Calibration " + String(versionString) + " plug-in. " + Time::getCurrentTime().toString(true, true)));
+    jsonObj->setProperty ("GenericLayout", ConfigurationHelper::convertElementsToVar (elements, "Loudspeaker Directions"));
     Result result2 = ConfigurationHelper::writeConfigurationToFile (destination, var (jsonObj));
 }
 

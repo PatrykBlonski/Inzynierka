@@ -170,7 +170,7 @@ void panner_loadSourcePreset //XXXXloudpkrs_dirs_deg
     switch(preset){
         default:
         case SOURCE_CONFIG_PRESET_DEFAULT:
-            nCH = 1;
+            nCH = 4;
             for(ch=0; ch<nCH; ch++)
                 for(i=0; i<2; i++)
                     dirs_deg[ch][i] = 0.0f;
