@@ -38,8 +38,8 @@ PluginProcessor::PluginProcessor() :
 	    .withOutput("Output", AudioChannelSet::discreteChannels(64), true))
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
-    refreshWindow = true;
     panner_create(&hPan);
+    refreshWindow = true;
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 

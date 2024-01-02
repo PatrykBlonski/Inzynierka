@@ -108,6 +108,13 @@ void panner_create
     pData->pmapReady = 0;
     pData->recalcPmap = 1;
 
+    panner_setNumLoudspeakers(*phPan, 2);
+    panner_setLoudspeakerAzi_deg(*phPan, 0, 0.0f);
+    panner_setLoudspeakerAzi_deg(*phPan, 1, 0.0f);
+    panner_setLoudspeakerDist_deg(*phPan, 0, 0.0f);
+    panner_setLoudspeakerDist_deg(*phPan, 1, 0.0f);
+    panner_setLoudspeakerElev_deg(*phPan, 0, 0.0f);
+    panner_setLoudspeakerElev_deg(*phPan, 1, 0.0f);
 
 }
 

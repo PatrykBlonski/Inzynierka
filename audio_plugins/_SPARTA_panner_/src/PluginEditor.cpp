@@ -663,14 +663,14 @@ void PluginEditor::sliderValueChanged (juce::Slider* sliderThatWasMoved)
     //[UsersliderValueChanged_Pre]
     //[/UsersliderValueChanged_Pre]
 
-    if (sliderThatWasMoved == SL_num_sources.get())
-    {
-        //[UserSliderCode_SL_num_sources] -- add your slider handling code here..
-        panner_setNumSources(hPan, (int)SL_num_sources->getValue());
-        refreshPanViewWindow = true;
-        //[/UserSliderCode_SL_num_sources]
-    }
-    else if (sliderThatWasMoved == SL_num_loudspeakers.get())
+    //if (sliderThatWasMoved == SL_num_sources.get())
+    //{
+    //    //[UserSliderCode_SL_num_sources] -- add your slider handling code here..
+    //    panner_setNumSources(hPan, (int)SL_num_sources->getValue());
+    //    refreshPanViewWindow = true;
+    //    //[/UserSliderCode_SL_num_sources]
+    //}
+    if (sliderThatWasMoved == SL_num_loudspeakers.get())
     {
         //[UserSliderCode_SL_num_loudspeakers] -- add your slider handling code here..
         panner_setNumLoudspeakers(hPan, (int)SL_num_loudspeakers->getValue());
