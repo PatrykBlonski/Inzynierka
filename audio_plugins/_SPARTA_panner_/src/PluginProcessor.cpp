@@ -117,9 +117,9 @@ void PluginProcessor::endCalibration() {
     saveBufferToWav(recordingBuffer, fileName);
    /* fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);*/
-    //distanceCalculation(SweepBuffer, recordingBuffer, loudspeakerNumber);
-    //panner_process(hPan, recordingBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
-    //refreshWindow = true;
+    distanceCalculation(SweepBuffer, recordingBuffer, loudspeakerNumber);
+    panner_process(hPan, recordingBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
+    refreshWindow = true;
 
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
@@ -439,9 +439,9 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
     if (calibrating) {
             if (currentRecordingPosition + buffer.getNumSamples() <= recordingBuffer.getNumSamples()) 
                 buffer.copyFrom(numberOfInputs + loudspeakerNumber, 0, SweepBuffer, 0, currentRecordingPosition, buffer.getNumSamples());
-            if (currentRecordingPosition - 2 * buffer.getNumSamples() <= recordingBuffer.getNumSamples() && latency > 2) {
+            if (currentRecordingPosition - 1 * buffer.getNumSamples() <= recordingBuffer.getNumSamples() && latency > 1) {
                 for (int channel = 0; channel < numberOfInputs; ++channel) {
-                    recordingBuffer.copyFrom(channel, currentRecordingPosition - 3 * buffer.getNumSamples(), buffer, channel, 0, buffer.getNumSamples());
+                    recordingBuffer.copyFrom(channel, currentRecordingPosition - 2 * buffer.getNumSamples(), buffer, channel, 0, buffer.getNumSamples());
                 }
             }
             else if (currentRecordingPosition - 2 * buffer.getNumSamples() > recordingBuffer.getNumSamples()){
