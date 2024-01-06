@@ -674,12 +674,12 @@ void PluginEditor::sliderValueChanged (juce::Slider* sliderThatWasMoved)
     {
         //[UserSliderCode_SL_num_loudspeakers] -- add your slider handling code here..
         panner_setNumLoudspeakers(hPan, (int)SL_num_loudspeakers->getValue());
-
         for (int i=0; i < (int)SL_num_loudspeakers->getValue();i++)
         {
             panner_setLoudspeakerAzi_deg(hPan, i, 0.0f);
             panner_setLoudspeakerElev_deg(hPan, i, 0.0f);
             panner_setLoudspeakerDist_deg(hPan, i, 0.0f);
+            panner_setLoudspeakerDist_plot(hPan, i, 0.0f);
         }
 
         //); panner_setLoudspeakerAzi_deg(hPan, loudspeakerIndex, newValueScaled);
@@ -738,6 +738,15 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
     else if (buttonThatWasClicked == tb_calibration.get())
     {
         //[UserButtonCode_tb_calibration] -- add your button handler code here..
+        panner_setNumLoudspeakers(hPan, (int)SL_num_loudspeakers->getValue());
+        for (int i = 0; i < (int)SL_num_loudspeakers->getValue(); i++)
+        {
+            panner_setLoudspeakerAzi_deg(hPan, i, 0.0f);
+            panner_setLoudspeakerElev_deg(hPan, i, 0.0f);
+            panner_setLoudspeakerDist_deg(hPan, i, 0.0f);
+            panner_setLoudspeakerDist_plot(hPan, i, 0.0f);
+        }
+        refreshPanViewWindow = true;
         hVst->startCalibration();
         //[/UserButtonCode_tb_calibration]
     }

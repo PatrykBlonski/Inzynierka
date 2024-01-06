@@ -154,6 +154,8 @@ public:
     void loadImpulseResponse();
     void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum);
     void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer);
+    std::vector<float> dists;
+    
 
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;

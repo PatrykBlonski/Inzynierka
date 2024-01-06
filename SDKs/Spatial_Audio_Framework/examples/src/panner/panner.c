@@ -615,12 +615,25 @@ void panner_setLoudspeakerDist_deg(void* const hPan, int index, float newDist) /
 {
     panner_data* pData = (panner_data*)(hPan);
     int ch;
-    newDist = roundf(newDist * 10.0f) / 10.0f;
-    newDist = SAF_MAX(newDist, 0.0f); //min distance
+    newDist = roundf(newDist * 100.0f) / 100.0f;
+    newDist = SAF_MAX(newDist, -10.0f); //min distance
     newDist = SAF_MIN(newDist, 10.0f); //max distance
 
     if (pData->loudpkrs_dirs_deg[index][2] != newDist) { //not sure if index is 2?
         pData->loudpkrs_dirs_deg[index][2] = newDist;
+    }
+}
+
+void panner_setLoudspeakerDist_plot(void* const hPan, int index, float newDist) //XXXX
+{
+    panner_data* pData = (panner_data*)(hPan);
+    int ch;
+    newDist = roundf(newDist * 100.0f) / 100.0f;
+    newDist = SAF_MAX(newDist, -10.0f); //min distance
+    newDist = SAF_MIN(newDist, 10.0f); //max distance
+
+    if (pData->loudpkrs_dirs_plot[index] != newDist) { //not sure if index is 2?
+        pData->loudpkrs_dirs_plot[index] = newDist;
     }
 }
 
@@ -752,8 +765,15 @@ float panner_getLoudspeakerElev_deg(void* const hPan, int index)
 float panner_getLoudspeakerDist_deg(void* const hPan, int index)
 {
     panner_data* pData = (panner_data*)(hPan);
-    pData->loudpkrs_dirs_deg[index][2] = roundf(pData->loudpkrs_dirs_deg[index][2] * 10.0f) / 10.0f;
+    pData->loudpkrs_dirs_deg[index][2] = roundf(pData->loudpkrs_dirs_deg[index][2] * 100.0f) / 100.0f;
 	return pData->loudpkrs_dirs_deg[index][2];
+}
+
+float panner_getLoudspeakerDist_plot(void* const hPan, int index)
+{
+    panner_data* pData = (panner_data*)(hPan);
+    pData->loudpkrs_dirs_plot[index] = roundf(pData->loudpkrs_dirs_plot[index] * 100.0f) / 100.0f;
+    return pData->loudpkrs_dirs_plot[index];
 }
 
 int panner_getNumLoudspeakers(void* const hPan)

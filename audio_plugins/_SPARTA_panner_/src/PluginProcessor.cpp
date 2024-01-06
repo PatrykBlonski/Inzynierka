@@ -50,7 +50,7 @@ PluginProcessor::~PluginProcessor()
 
 void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer) {
     // Calculate the total number of samples
-    int totalSamples = static_cast<int>(duration * sampleRate + 256);
+    int totalSamples = static_cast<int>(duration * sampleRate);
 
     // Resize the sweepBuffer to hold the sine sweep
     sweepBuffer.setSize(1, totalSamples);  // Assuming mono
@@ -90,17 +90,17 @@ void PluginProcessor::startCalibration() {
    //// std::string stdStringPath = "C:\\Users\\patry\\Downloads\\sweep.wav";
    // SweepBuffer.setSize(1, 480000+256);
    // SweepBuffer = loadImpulseResponse(juceStringPath);
-
+    dists.clear();
     loudspeakerNumber = 0;
     juce::String fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);
-    prepareToPlay(getSampleRate(), 480256);
-    recordingBuffer.setSize(panner_getNumSources(hPan), getSampleRate() * duration + 256);
+    prepareToPlay(getSampleRate(), 480000);
+    recordingBuffer.setSize(panner_getNumSources(hPan), getSampleRate() * duration);
     recordingBuffer.clear();
     latency = 0;
-    // juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-    ////juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-    //ImpulseBuffer = loadImpulseResponse(juceStringPath);
+     juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    //juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    ImpulseBuffer = loadImpulseResponse(juceStringPath);
     currentRecordingPosition = 0;
     calibrating = true;
     //phase = 0.0;
@@ -117,16 +117,16 @@ void PluginProcessor::endCalibration() {
     saveBufferToWav(recordingBuffer, fileName);
    /* fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);*/
-    distanceCalculation(SweepBuffer, recordingBuffer, loudspeakerNumber);
-    panner_process(hPan, recordingBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
+    distanceCalculation(SweepBuffer, ImpulseBuffer, loudspeakerNumber);
+    panner_process(hPan, ImpulseBuffer.getArrayOfWritePointers(), panner_getNumSources(hPan), ImpulseBuffer.getNumSamples(), loudspeakerNumber, 1);
     refreshWindow = true;
 
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
         latency = 0;
-     /*   ImpulseBuffer.clear();
+        ImpulseBuffer.clear();
         juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-        ImpulseBuffer = loadImpulseResponse(juceStringPath);*/
+        ImpulseBuffer = loadImpulseResponse(juceStringPath);
         recordingBuffer.clear();
         //phase = 0.0;
         //timeElapsed = 0.0;
@@ -135,6 +135,24 @@ void PluginProcessor::endCalibration() {
         calibrating = true;
         isRecording = true;
     }
+  /*  else {
+        float avgDist = 0;
+        int i = 0;
+        std::vector<float> norm;
+        float max = *std::max_element(dists.begin(), dists.end());
+        float min = *std::min_element(dists.begin(), dists.end());
+        for (auto& elem : dists) {
+            avgDist += elem/loudspeakerNumber;
+            norm.push_back(sqrt(elem / max));
+        }
+
+        for (auto &elem : norm) {
+            panner_setLoudspeakerDist_plot(hPan, i, 0.7 + 0.3*(elem - *std::min_element(norm.begin(),norm.end())) / (*std::max_element(norm.begin(), norm.end()) - *std::min_element(norm.begin(),norm.end())));
+            panner_setLoudspeakerDist_deg(hPan, i, elem - avgDist);
+            i++;
+        }
+        refreshWindow = true;
+    }*/
 }
 
 double PluginProcessor::computeSweepFrequency(double time) {
@@ -444,7 +462,7 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
                     recordingBuffer.copyFrom(channel, currentRecordingPosition - 2 * buffer.getNumSamples(), buffer, channel, 0, buffer.getNumSamples());
                 }
             }
-            else if (currentRecordingPosition - 2 * buffer.getNumSamples() > recordingBuffer.getNumSamples()){
+            else if (currentRecordingPosition - 1 * buffer.getNumSamples() > recordingBuffer.getNumSamples()){
                 endCalibration();
             }
             currentRecordingPosition += buffer.getNumSamples();
@@ -533,7 +551,24 @@ void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer
     const float speedOfSound = 343.0f;
     float distance = peakTime * speedOfSound;
 
-    panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+    //panner_setLoudspeakerDist_deg(hPan, loudNum, distance);
+    dists.push_back(distance);
+    float avgDist = 0;
+    int i{};
+    std::vector<float> norm;
+    float max = *std::max_element(dists.begin(), dists.end());
+    for (auto& elem : dists) {
+        avgDist += elem / (loudspeakerNumber + 1);
+        norm.push_back(sqrt(elem / max));
+    }
+    float maxNorm = *std::max_element(norm.begin(), norm.end());
+    float minNorm = *std::min_element(norm.begin(), norm.end());
+    for (auto& elem : norm) {
+        panner_setLoudspeakerDist_plot(hPan, i, 0.7 + 0.3 * (elem - minNorm) / (maxNorm - minNorm));
+        panner_setLoudspeakerDist_deg(hPan, i, dists[i] - avgDist);
+        i++;
+    }
+    
    // // Check if buffers are valid and have the same number of samples
    // jassert(sweep.getNumSamples() == input.getNumSamples());
    //// jassert(sweep.getNumChannels() > 0 && input.getNumChannels() > 0);

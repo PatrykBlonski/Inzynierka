@@ -192,6 +192,7 @@ void panner_setLoudspeakerAzi_deg(void* const hPan, int index, float newAzi_deg)
 void panner_setLoudspeakerElev_deg(void* const hPan, int index, float newElev_deg);
 
 void panner_setLoudspeakerDist_deg(void* const hPan, int index, float newDist); //XXXX
+void panner_setLoudspeakerDist_plot(void* const hPan, int index, float newDist); //XXXX
 
 /** Sets the number of loudspeakers to pan to */
 void panner_setNumLoudspeakers(void* const hPan, int new_nLoudspeakers);
@@ -271,6 +272,7 @@ float panner_getLoudspeakerAzi_deg(void* const hPan, int index);
 float panner_getLoudspeakerElev_deg(void* const hPan, int index);
 
 float panner_getLoudspeakerDist_deg(void* const hPan, int index); //distance from mic
+float panner_getLoudspeakerDist_plot(void* const hPan, int index); //distance from mic
 
 /** Returns the number of loudspeakers in the current layout */
 int panner_getNumLoudspeakers(void* const hPan);

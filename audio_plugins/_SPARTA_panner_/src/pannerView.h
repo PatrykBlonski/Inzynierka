@@ -26,7 +26,40 @@
 
 //[/Headers]
 
+class LoudspeakerIconComponent : public Component,
+                                 public SettableTooltipClient {
+public:
+    //LoudspeakerIconComponent(float distance, float azimuth, float elevation)
+    //    : distanceValue(distance), azimuthValue(azimuth), elevationValue(elevation) {
+    //    // Set the tooltip text for this component
+    //}
 
+    void paint(Graphics& g) override {
+        g.setColour(Colour::fromFloatRGBA(0.5f, 1.0f, 0.1f, 1.0f));
+        g.setOpacity(0.3f);
+        g.fillRect(getLocalBounds()); // Draw the rectangle for the icon
+
+    }
+
+    // You can override mouseEnter and mouseExit if you want to change the appearance on hover
+    // void mouseEnter(const MouseEvent& event) override { ... }
+    // void mouseExit(const MouseEvent& event) override { ... }
+
+    // Add setters if you need to change the values dynamically
+    void setDistance(float newDistance) {
+        distanceValue = newDistance;
+        // Update the tooltip or other properties if needed
+    }
+    void setTooltip(const String& newTooltip) override;
+    // Add other setters for azimuth and elevation if needed
+
+private:
+    float distanceValue;
+    float azimuthValue;
+    float elevationValue;
+
+    static constexpr int icon_size = 10; // Example icon size, adjust as needed
+};
 
 //==============================================================================
 /**
@@ -70,9 +103,11 @@ private:
     bool showInputs;
     bool showOutputs;
     Rectangle<float> SourceIcons[MAX_NUM_INPUTS];
-    Rectangle<float> LoudspeakerIcons[MAX_NUM_OUTPUTS];
+    LoudspeakerIconComponent* LoudspeakerIcons[MAX_NUM_OUTPUTS];
+    //Rectangle<float> LoudspeakerIcons[MAX_NUM_OUTPUTS];
     int NSources;
     int NLoudspeakers;
+    int NLoudspeakersPrev;
     bool sourceIconIsClicked;
     int indexOfClickedSource;
     //[/UserVariables]

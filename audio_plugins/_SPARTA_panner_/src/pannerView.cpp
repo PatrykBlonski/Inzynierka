@@ -28,6 +28,17 @@
 const float icon_size = 10.0f;
 
 
+// LoudspeakerIconComponent.h
+#pragma once
+#include <JuceHeader.h>
+
+
+
+void LoudspeakerIconComponent::setTooltip(const String& newTooltip)
+{
+    SettableTooltipClient::setTooltip(newTooltip);
+}
+
 //[/MiscUserDefs]
 
 //==============================================================================
@@ -56,12 +67,22 @@ pannerView::pannerView (PluginProcessor* ownerFilter, int _width, int _height)
     //}
     //NSources = panner_getNumSources(hPan);
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
+    NLoudspeakersPrev = NLoudspeakers;
+    //for(int ls=0; ls<NLoudspeakers; ls++){
+    //    LoudspeakerIcons[ls].setBounds(width - width*(panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f)/360.f - icon_size/2.0f,
+    //                                   height - height*(panner_getLoudspeakerElev_deg(hPan, ls)+90.0f)/180.0f - icon_size/2.0f,
+    //                                   icon_size,
+    //                                   icon_size);
+    //}
 
-    for(int ls=0; ls<NLoudspeakers; ls++){
-        LoudspeakerIcons[ls].setBounds(width - width*(panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f)/360.f - icon_size/2.0f,
-                                       height - height*(panner_getLoudspeakerElev_deg(hPan, ls)+90.0f)/180.0f - icon_size/2.0f,
-                                       icon_size,
-                                       icon_size);
+    for (int ls = 0; ls < NLoudspeakers; ls++) {
+        LoudspeakerIcons[ls] = new LoudspeakerIconComponent();
+        LoudspeakerIcons[ls]->setBounds(width - width * (panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f) / 360.f - icon_size / 2.0f,
+            height - height * (panner_getLoudspeakerElev_deg(hPan, ls) + 90.0f) / 180.0f - icon_size / 2.0f,
+            icon_size,
+            icon_size);
+        
+
     }
     showInputs = true;
     showOutputs = true;
@@ -75,7 +96,9 @@ pannerView::~pannerView()
     //[Destructor_pre]. You can add your own custom destruction code here..
     //[/Destructor_pre]
 
-
+    for (int ls = 0; ls < NLoudspeakers; ++ls) {
+        delete LoudspeakerIcons[ls];
+    }
 
     //[Destructor]. You can add your own custom destruction code here..
     //[/Destructor]
@@ -123,14 +146,14 @@ void pannerView::paint (juce::Graphics& g)
     g.drawLine((float)i * width / (float)numGridLinesX, 0, (float)i * width / (float)numGridLinesX, height, 1.0f);
     g.setOpacity(0.75f);
     if (i >= (numGridLinesX - 2) / 2) {
-        if ((-20 / 2 + i * (int)20 / (numGridLinesX - 2)) % 2 == 0 || (-20 / 2 + i * (int)20 / (numGridLinesX - 2)) == 0) {
-            g.drawText(String((int)(-20 / 2 + i * (int)20 / (numGridLinesX - 2))),
+        if ((-20 / 2 + i * (int)20 / (numGridLinesX - 2)) % 5 == 0 || (-20 / 2 + i * (int)20 / (numGridLinesX - 2)) == 0) {
+            g.drawText(String((float)(( - 20 / 2 + i * 20.0f / (numGridLinesX - 2)) / 10.0f)),
                 (float)(i + 2) * width / (float)numGridLinesX - 40, height / 2, 40, 20, Justification::centred, true);
         }
     }
     else if(i < (numGridLinesX - 2) / 2){
-        if ((-20 / 2 + i * (int)20 / (numGridLinesX - 2)) % 2 == 0) {
-            g.drawText(String((int)(-20 / 2 + i * (int)20 / (numGridLinesX - 2))),
+        if ((-20 / 2 + i * (int)20 / (numGridLinesX - 2)) % 5 == 0) {
+            g.drawText(String((float)(( - 20 / 2 + i * 20.0f / (numGridLinesX - 2)) / 10.0f)),
                 (float)i * width / (float)numGridLinesX, height / 2, 40, 20, Justification::centred, true);
         }
     }
@@ -141,18 +164,53 @@ void pannerView::paint (juce::Graphics& g)
         g.drawLine(0, (float)i * height / (float)numGridLinesY, width, (float)i * height / (float)numGridLinesY, 1.0f);
         g.setOpacity(0.75f);
         if (i < (numGridLinesY - 2) / 2) {
-            if ((20 / 2 - i * (int)20 / (numGridLinesY - 2)) % 2 == 0) {
-                g.drawText(String((int)(20 / 2 - i * (int)20 / (numGridLinesY - 2))),
+            if ((20 / 2 - i * (int)20 / (numGridLinesY - 2)) % 5 == 0) {
+                g.drawText(String((float)((20 / 2 - i * (int)20 / (numGridLinesY - 2))/10.0f)),
                     width / 2.0f, (float)i * height / (float)numGridLinesY + 8, 40, 20, Justification::centred, true);
             }
         }
         else if(i > (numGridLinesY - 2) / 2) {
-            if ((20 / 2 - i * (int)20 / (numGridLinesY - 2)) % 2 == 0) {
-                g.drawText(String((int)(20 / 2 - i * (int)20 / (numGridLinesY - 2))),
+            if ((20 / 2 - i * (int)20 / (numGridLinesY - 2)) % 5 == 0) {
+                g.drawText(String((float)((20 / 2 - i * (int)20 / (numGridLinesY - 2))/10.0f)),
                     width / 2.0f, (float)(i + 2) * height / (float)numGridLinesY - 20 - 9, 40, 20, Justification::centred, true);
             }
         }
     }
+    ///* Draw Grid lines and labels */
+    //int numGridLinesX = 22;
+    //int numGridLinesY = 22;
+    //float stepX = 2.0f / (numGridLinesX - 2); // The step between each grid line for X-axis
+    //float stepY = 2.0f / (numGridLinesY - 2); // The step between each grid line for Y-axis
+    //g.setColour(Colours::white);
+    //g.setOpacity(0.75f);
+
+    //g.drawLine(0.0f, height / 2.0f, width, height / 2.0f, 1.0f);
+    //g.drawLine(width / 2.0f, 0, width / 2.0f, height, 1.0f);
+
+    //for (int i = 0; i <= numGridLinesX; i++) {
+    //    g.setOpacity(0.1f);
+    //    g.drawLine((float)i * width / (float)numGridLinesX, 0, (float)i * width / (float)numGridLinesX, height, 1.0f);
+    //    g.setOpacity(0.75f);
+    //    float labelValueX = -1.0f + i * stepX;
+    //    // Check if the labelValueX is a multiple of 0.1
+    //    if (fmod(labelValueX, 0.1f) <= std::numeric_limits<float>::epsilon() || fmod(labelValueX, 0.1f) >= 0.1f - std::numeric_limits<float>::epsilon()) {
+    //        g.drawText(String(labelValueX, 1),
+    //            (float)i * width / (float)numGridLinesX - 20, height / 2 + 20, 40, 20, Justification::centred, true);
+    //    }
+    //}
+
+    //for (int i = 0; i <= numGridLinesY; i++) {
+    //    g.setOpacity(0.1f);
+    //    g.drawLine(0, (float)i * height / (float)numGridLinesY, width, (float)i * height / (float)numGridLinesY, 1.0f);
+    //    g.setOpacity(0.75f);
+    //    float labelValueY = 1.0f - i * stepY;
+    //    // Check if the labelValueY is a multiple of 0.1
+    //    if (fmod(labelValueY, 0.1f) <= std::numeric_limits<float>::epsilon() || fmod(labelValueY, 0.1f) >= 0.1f - std::numeric_limits<float>::epsilon()) {
+    //        g.drawText(String(labelValueY, 1),
+    //            width / 2 - 40, (float)i * height / (float)numGridLinesY - 10, 40, 20, Justification::centred, true);
+    //    }
+    //}
+
 
 
 
@@ -160,9 +218,14 @@ void pannerView::paint (juce::Graphics& g)
         /* Draw loudspeaker icons */
         for(int ls=0; ls<NLoudspeakers; ls++){
             /* icon */
-            g.setColour(Colour::fromFloatRGBA(0.5f, 1.0f, 0.1f, 1.0f));
-            g.setOpacity(0.3f);
-            g.fillRect(LoudspeakerIcons[ls]);
+            addAndMakeVisible(LoudspeakerIcons[ls]);
+        }
+        repaint();
+    }
+    else {
+        for (int ls = 0; ls < NLoudspeakers; ls++) {
+            /* icon */
+            LoudspeakerIcons[ls]->setVisible(false);
         }
     }
 
@@ -245,13 +308,13 @@ void pannerView::refreshPanView()
     float x;
     float y;
 
-    for(int src=0; src<MAX_NUM_INPUTS; src++){
-        SourceIcons[src].setBounds(width - width*(panner_getSourceAzi_deg(hPan, src) + 180.0f)/360.f - icon_size/2.0f,
-                                   height - height*(panner_getSourceElev_deg(hPan, src) + 90.0f)/180.0f - icon_size/2.0f,
-                                   icon_size,
-                                   icon_size);
-    }
-    NSources = panner_getNumSources(hPan);
+    //for(int src=0; src<MAX_NUM_INPUTS; src++){
+    //    SourceIcons[src].setBounds(width - width*(panner_getSourceAzi_deg(hPan, src) + 180.0f)/360.f - icon_size/2.0f,
+    //                               height - height*(panner_getSourceElev_deg(hPan, src) + 90.0f)/180.0f - icon_size/2.0f,
+    //                               icon_size,
+    //                               icon_size);
+    //}
+    //NSources = panner_getNumSources(hPan);
     NLoudspeakers = panner_getNumLoudspeakers(hPan)>MAX_NUM_OUTPUTS ? MAX_NUM_OUTPUTS : panner_getNumLoudspeakers(hPan);
 
     //TEST
@@ -267,13 +330,32 @@ void pannerView::refreshPanView()
     //panner_setLoudspeakerAzi_deg(hPan, 2, 98.0f);
     //panner_setLoudspeakerDist_deg(hPan, 2, 9.0f);
     //panner_setLoudspeakerElev_deg(hPan, 2, 2.0f);
+    if (NLoudspeakersPrev != NLoudspeakers) {
+        if (NLoudspeakers > NLoudspeakersPrev) {
+            for (int ls = NLoudspeakersPrev; ls < NLoudspeakers; ls++) {
+                LoudspeakerIcons[ls] = new LoudspeakerIconComponent();
+                LoudspeakerIcons[ls]->setBounds(width - width * (panner_getLoudspeakerAzi_deg(hPan, ls) + 180.0f) / 360.f - icon_size / 2.0f,
+                    height - height * (panner_getLoudspeakerElev_deg(hPan, ls) + 90.0f) / 180.0f - icon_size / 2.0f,
+                    icon_size,
+                    icon_size);
+            }
+            NLoudspeakersPrev = NLoudspeakers;
+        }
+        else {
+            for (int ls = NLoudspeakers; ls < NLoudspeakersPrev; ls++) {
+                delete LoudspeakerIcons[ls];
+            }
+            NLoudspeakersPrev = NLoudspeakers;
+        }
+    }
 
     for(int ls=0; ls<NLoudspeakers; ls++){
-        calculateCoordinates(panner_getLoudspeakerDist_deg(hPan, ls), panner_getLoudspeakerAzi_deg(hPan, ls), &x, &y);
-        LoudspeakerIcons[ls].setBounds(width - width*(11 - x)/22.f - icon_size/2.0f,
+        calculateCoordinates(panner_getLoudspeakerDist_plot(hPan, ls)*10.0f, panner_getLoudspeakerAzi_deg(hPan, ls), &x, &y);
+        LoudspeakerIcons[ls]->setBounds(width - width*(11 - x)/22.0f - icon_size/2.0f,
                                        height - height*(11 + y)/22.0f - icon_size/2.0f,
                                        icon_size,
                                        icon_size);
+        LoudspeakerIcons[ls]->setTooltip(String(panner_getLoudspeakerDist_deg(hPan, ls)));
     }
     repaint();
 }
