@@ -4,26 +4,7 @@ message(STATUS "Configuring SAF examples:")
 if(NOT DEFINED saf_example_list)
     # List of examples which have the common structure (<example>.h/.c, <example>_internal.h/.c):
     set(saf_example_list
-        ambi_bin
-        ambi_dec
-        ambi_drc
-        ambi_enc
-        ambi_roomsim
-        array2sh
-        beamformer
-        binauraliser
-        binauraliser_nf
-        decorrelator
-        dirass
-        matrixconv
-        multiconv
-        panner
-        pitch_shifter
-        powermap
-        rotator
-        sldoa
-        spreader
-        tvconv)
+        calibration
 endif()
 
 # Find number of examples
@@ -50,25 +31,6 @@ foreach(current_example RANGE ${num_examples})
         ${CMAKE_CURRENT_SOURCE_DIR}/src/${current_string}/${current_string}_internal.h
         ${CMAKE_CURRENT_SOURCE_DIR}/src/${current_string}/${current_string}.c
     )
-
-    # Extra source files specific to sldoa
-    if (current_string STREQUAL sldoa)
-        target_sources(${PROJECT_NAME}
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/${current_string}/${current_string}_database.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/${current_string}/${current_string}_database.h
-        )
-    endif()
-
-    # Extra source files specific to binauraliserNF
-    if (current_string STREQUAL binauraliser_nf)
-        target_sources(${PROJECT_NAME}
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/binauraliser/binauraliser_internal.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/binauraliser/binauraliser_internal.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/binauraliser/binauraliser.c
-        )
-    endif()
 
     # enable compiler warnings
     if(UNIX)
