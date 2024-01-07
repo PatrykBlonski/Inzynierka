@@ -80,10 +80,11 @@ void powermap_initAna(void* const hPm)
     }
     switch(pData->aspectRatioOption){
         default:
+        case ASPECT_RATIO_4_3: aspectRatio = 4.0f/3.0f; break;
         case ASPECT_RATIO_2_1: aspectRatio = 2.0f; break;
     }
     N_azi = pData->dispWidth;
-    N_ele = (int)((float)pData->dispWidth/aspectRatio + 0.5f);
+    N_ele = (int)((float)pData->dispWidth / aspectRatio + 0.5f);
     grid_x_axis = malloc1d(N_azi * sizeof(float));
     grid_y_axis = malloc1d(N_ele * sizeof(float));
     vfov = hfov/aspectRatio;

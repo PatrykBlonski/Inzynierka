@@ -15,6 +15,8 @@
               enableIAA="0" companyCopyright="Aalto" pluginFormats="buildVST"
               jucerFormatVersion="1" headerPath="C:\Users\patry\Desktop\inzynierka\SPARTA\SDKs\Spatial_Audio_Framework\framework\resources\kissFFT">
   <MAINGROUP id="imnfnp" name="sparta_calibration">
+    <FILE id="YPNE1a" name="overlay.cpp" compile="1" resource="0" file="src/overlay.cpp"/>
+    <FILE id="Mej9KP" name="overlay.h" compile="0" resource="0" file="src/overlay.h"/>
     <FILE id="yE7YLl" name="ConfigurationHelper.h" compile="0" resource="0"
           file="../resources/ConfigurationHelper.h"/>
     <FILE id="wrlKCk" name="SPARTALookAndFeel.h" compile="0" resource="0"
@@ -35,16 +37,20 @@
     <GROUP id="{FDC1C61B-0C6B-8810-F6D8-B8829BB68731}" name="panner">
       <GROUP id="{8634C764-094F-B45E-E303-922184BA3B81}" name="Header Files">
         <FILE id="gbaFP1" name="_common.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/_common.h"/>
-        <FILE id="CXhOoA" name="CalculateXY.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/CalculateXY.h"/>
         <FILE id="PKqa1d" name="panner.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/panner.h"/>
         <FILE id="opkEJw" name="panner_internal.h" compile="0" resource="0"
               file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner_internal.h"/>
+        <FILE id="gKpCaO" name="powermap.h" compile="0" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/include/powermap.h"/>
+        <FILE id="MTXLdi" name="powermap_internal.h" compile="0" resource="0"
+              file="../../SDKs/Spatial_Audio_Framework/examples/src/powermap/powermap_internal.h"/>
       </GROUP>
       <GROUP id="{1F4BBFC4-CF29-237B-2C91-E6ECE37B66E3}" name="Source Files">
-        <FILE id="XgLkze" name="CalculateXY.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/CalculateXY.c"/>
         <FILE id="wgzs9p" name="panner.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner.c"/>
         <FILE id="uKfUHL" name="panner_internal.c" compile="1" resource="0"
               file="../../SDKs/Spatial_Audio_Framework/examples/src/panner/panner_internal.c"/>
+        <FILE id="NcaLA1" name="powermap.c" compile="1" resource="0" file="../../SDKs/Spatial_Audio_Framework/examples/src/powermap/powermap.c"/>
+        <FILE id="Xf5AmR" name="powermap_internal.c" compile="1" resource="0"
+              file="../../SDKs/Spatial_Audio_Framework/examples/src/powermap/powermap_internal.c"/>
       </GROUP>
     </GROUP>
     <GROUP id="{F0127264-82A7-51E9-A342-BABDD0E8F7D3}" name="Spatial_Audio_Framework">

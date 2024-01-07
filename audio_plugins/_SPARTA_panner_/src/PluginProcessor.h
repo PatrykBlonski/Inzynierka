@@ -24,6 +24,7 @@
 
 #include <JuceHeader.h>
 #include "panner.h"
+#include "powermap.h"
 #define CONFIGURATIONHELPER_ENABLE_GENERICLAYOUT_METHODS 1
 #include "../../resources/ConfigurationHelper.h"
 #include <thread>
@@ -61,9 +62,11 @@ public:
     AudioBuffer<float> recordingBuffer;  // A buffer to store the microphone input.
     AudioBuffer<float> ImpulseBuffer;
     AudioBuffer<float> SweepBuffer;
+    AudioBuffer<float> TempBuffer;
     //AudioProcessorValueTreeState parameters;
     /* Get functions */
     void* getFXHandle() { return hPan; }
+    void* getFXHandlePmap() { return hPm; }
 	bool getIsPlaying() { return isPlaying; }
     int getCurrentBlockSize(){ return nHostBlockSize; }
     int getCurrentNumInputs(){ return nNumInputs; }
@@ -92,12 +95,11 @@ public:
     
 private:
     void* hPan;           /* panner handle */
-    void* bhPan;          /* beamform panner handle */
+    void* hPm;          /* powermap panner handle */
     int nNumInputs;       /* current number of input channels */
     int nNumOutputs;      /* current number of output channels */
     int nSampleRate;      /* current host sample rate */
     int nHostBlockSize;   /* typical host block size to expect, in samples */
-    bool isPlaying;
     File lastDir;
     ValueTree elements {"SourcesOrLoudspeakers"}; 
     
@@ -110,8 +112,6 @@ private:
     const double duration = 10.0;   // Duration in seconds
     double timeElapsed = 0.0;  // Keep track of how long the sweep has been playing
     bool isRecording = false;
-    int currentRecordingPosition = 0;
-    int loudspeakerNumber = 0;
     dsp::Convolution convolution1;
     dsp::Convolution convolution2;
     dsp::Convolution convolution3;
@@ -132,6 +132,15 @@ private:
                         std::cout << "Could not create thread" << exception.what() << std::endl;
                     }
                 }
+                if (powermap_getCodecStatus(hPm) == CODEC_STATUS_NOT_INITIALISED) {
+                    try {
+                        std::thread threadInit(powermap_initCodec, hPm);
+                        threadInit.detach();
+                    }
+                    catch (const std::exception& exception) {
+                        std::cout << "Could not create thread" << exception.what() << std::endl;
+                    }
+                }
                 break;
             case TIMER_GUI_RELATED:
                 /* handled in PluginEditor */
@@ -145,6 +154,10 @@ private:
 public:
     PluginProcessor();
     ~PluginProcessor();
+    bool isPlaying;
+    int currentRecordingPosition = 0;
+    int loudspeakerNumber = 0;
+    bool playAll = false;
     double computeSweepFrequency(double time);
     void PluginProcessor::startCalibration();
     void PluginProcessor::endCalibration();
@@ -155,6 +168,7 @@ public:
     void PluginProcessor::distanceCalculation(AudioBuffer<float>& sweep, AudioBuffer<float>& input, int loudNum);
     void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer);
     std::vector<float> dists;
+    void PluginProcessor::next();
     
 
 

@@ -39,13 +39,16 @@ PluginProcessor::PluginProcessor() :
 {
     AudioProcessorValueTreeState parameters(*this, nullptr, "PARAMETERS", createParameterLayout());
     panner_create(&hPan);
+    powermap_create(&hPm);
+    TempBuffer.setSize(4, 1024);
     refreshWindow = true;
     startTimer(TIMER_PROCESSING_RELATED, 80); 
 }
 
 PluginProcessor::~PluginProcessor()
 {
-	panner_destroy(&hPan);
+    panner_destroy(&hPan);
+    powermap_destroy(&hPm);
 }
 
 void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer) {
@@ -124,35 +127,31 @@ void PluginProcessor::endCalibration() {
     loudspeakerNumber++;
     if (loudspeakerNumber < panner_getNumLoudspeakers(hPan)) {
         latency = 0;
-        ImpulseBuffer.clear();
-        juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-        ImpulseBuffer = loadImpulseResponse(juceStringPath);
-        recordingBuffer.clear();
+        if (playAll) {
+            ImpulseBuffer.clear();
+            juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+            ImpulseBuffer = loadImpulseResponse(juceStringPath);
+            currentRecordingPosition = 0;
+            calibrating = true;
+        }
+       
         //phase = 0.0;
         //timeElapsed = 0.0;
         //frequency = startFrequency;
-        currentRecordingPosition = 0;
-        calibrating = true;
-        isRecording = true;
     }
-  /*  else {
-        float avgDist = 0;
-        int i = 0;
-        std::vector<float> norm;
-        float max = *std::max_element(dists.begin(), dists.end());
-        float min = *std::min_element(dists.begin(), dists.end());
-        for (auto& elem : dists) {
-            avgDist += elem/loudspeakerNumber;
-            norm.push_back(sqrt(elem / max));
-        }
+}
 
-        for (auto &elem : norm) {
-            panner_setLoudspeakerDist_plot(hPan, i, 0.7 + 0.3*(elem - *std::min_element(norm.begin(),norm.end())) / (*std::max_element(norm.begin(), norm.end()) - *std::min_element(norm.begin(),norm.end())));
-            panner_setLoudspeakerDist_deg(hPan, i, elem - avgDist);
-            i++;
-        }
-        refreshWindow = true;
-    }*/
+void PluginProcessor::next() {
+    currentRecordingPosition = 0;
+    latency = 0;
+
+    ImpulseBuffer.clear();
+    juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+    ImpulseBuffer = loadImpulseResponse(juceStringPath);
+    recordingBuffer.clear();
+
+    calibrating = true;
+
 }
 
 double PluginProcessor::computeSweepFrequency(double time) {
@@ -398,6 +397,7 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     isPlaying = false;
 
 	panner_init(hPan, nSampleRate);
+    powermap_init(hPm, nSampleRate);
     AudioProcessor::setLatencySamples(panner_getProcessingDelay());
 }
 
@@ -467,6 +467,19 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
             }
             currentRecordingPosition += buffer.getNumSamples();
             latency += 1;
+    }
+    if (isPlaying) {
+        if (currentRecordingPosition + 1024 <= ImpulseBuffer.getNumSamples()) {
+            for (int i = 0; i < 4; i++) {
+                TempBuffer.copyFrom(i, 0, ImpulseBuffer, i, currentRecordingPosition, 1024);
+            }
+            bufferData = TempBuffer.getArrayOfWritePointers();
+            currentRecordingPosition+=1024;
+            powermap_analysis(hPm, bufferData, 4, 1024, isPlaying);
+        }
+        else {
+            isPlaying = false;
+        }
     }
 }
 

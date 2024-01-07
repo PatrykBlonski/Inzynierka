@@ -33,6 +33,8 @@ PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/PluginProcessor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pannerView.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/pannerView.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/overlay.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/overlay.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/inputCoordsView.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/inputCoordsView.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/outputCoordsView.h

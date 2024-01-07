@@ -184,9 +184,9 @@ typedef enum {
 
 /** Available aspect ratios */
 typedef enum {
-    ASPECT_RATIO_2_1 = 1, /**< ASPECT_RATIO_2_1  - 2:1 */
-    ASPECT_RATIO_16_9,    /**< ASPECT_RATIO_16_9 - 16:9 */
-    ASPECT_RATIO_4_3      /**< ASPECT_RATIO_4_3  - 4:3 */
+    ASPECT_RATIO_4_3 = 1,      /**< ASPECT_RATIO_4_3  - 4:3 */
+    ASPECT_RATIO_2_1,       /**< ASPECT_RATIO_2_1  - 2:1 */
+    ASPECT_RATIO_16_9    /**< ASPECT_RATIO_16_9 - 16:9 */
 
 }ASPECT_RATIO_OPTIONS;
     

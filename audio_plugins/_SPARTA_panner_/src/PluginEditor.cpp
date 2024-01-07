@@ -52,7 +52,7 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     SL_num_sources->setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 20);
     SL_num_sources->addListener (this);
 
-    SL_num_sources->setBounds (152, 94, 48, 20);
+    SL_num_sources->setBounds (152, 86, 48, 20);
 
     TB_showOutputs.reset (new juce::ToggleButton ("new toggle button"));
     addAndMakeVisible (TB_showOutputs.get());
@@ -116,6 +116,28 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
 
     CBnorm->setBounds (96, 208, 86, 24);
 
+    tb_play.reset(new juce::TextButton("new button"));
+    addAndMakeVisible(tb_play.get());
+    tb_play->setButtonText(TRANS("PowerMap"));
+    tb_play->setConnectedEdges(juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight);
+    tb_play->addListener(this);
+    tb_play->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3c393c));
+    tb_play->setBounds(57, 298, 96, 32);
+
+    tb_next.reset(new juce::TextButton("new button"));
+    addAndMakeVisible(tb_next.get());
+    tb_next->setButtonText(TRANS("Next"));
+    tb_next->setConnectedEdges(juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight);
+    tb_next->addListener(this);
+    tb_next->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3c393c));
+    tb_next->setBounds(59, 340, 94, 32);
+
+    TB_PlayAll.reset(new juce::ToggleButton("new toggle button"));
+    addAndMakeVisible(TB_PlayAll.get());
+    TB_PlayAll->setButtonText(juce::String());
+    TB_PlayAll->addListener(this);
+
+    TB_PlayAll->setBounds(170, 256, 24, 24);
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -128,6 +150,7 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     /* handle to pluginProcessor */
 	hVst = ownerFilter;
     hPan = hVst->getFXHandle();
+    hPm = hVst->getFXHandlePmap();
 
     //panner_data* pData = (panner_data*)hPan;
     //// Now zero out the array using nested loops
@@ -214,6 +237,8 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     /* grab current parameter settings */
     SL_num_sources->setValue(panner_getNumSources(hPan),dontSendNotification);
     TB_showOutputs->setToggleState(true, dontSendNotification);
+    TB_PlayAll->setToggleState(true, dontSendNotification);
+    hVst->playAll = true;
 
     CBformat->setSelectedId(panner_getChOrder(hPan), dontSendNotification);
     CBnorm->setSelectedId(panner_getNormType(hPan), dontSendNotification);
@@ -230,6 +255,7 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
 
     /* tooltips */
     //CBsourceDirsPreset->setTooltip("Presets for source directions to use for spatialisation.");
+    TB_PlayAll->setTooltip("If enabled, all speakers are calibrated one by one; if disabled, click the next button to calibrate the next speaker.");
     TB_showOutputs->setTooltip("Enables/Disables displaying the loudspeaker directions in the panning window.");
    // tb_loadJSON_src->setTooltip("Loads source directions from a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
     tb_saveJSON_ls->setTooltip("Saves the current loudspeaker directions to a JSON file. The JSON file format follows the same convention as the one employed by the IEM plugin suite (https://plugins.iem.at/docs/configurationfiles/).");
@@ -259,10 +285,13 @@ PluginEditor::~PluginEditor()
   //  CBsourceDirsPreset = nullptr;
     SL_num_sources = nullptr;
     TB_showOutputs = nullptr;
+    TB_PlayAll = nullptr;
     SL_num_loudspeakers = nullptr;
    // tb_loadJSON_src = nullptr;
     tb_saveJSON_ls = nullptr;
     tb_calibration = nullptr;
+    tb_play = nullptr;
+    tb_next = nullptr;
     CBformat = nullptr;
     CBnorm = nullptr;
 
@@ -408,8 +437,8 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 23, y = 88, width = 145, height = 30;
-        juce::String text (TRANS("Number of Inputs:"));
+        int x = 23, y = 80, width = 145, height = 30;
+        juce::String text (TRANS("Number Of Inputs:"));
         juce::Colour fillColour = juce::Colours::white;
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
@@ -628,6 +657,7 @@ void PluginEditor::resized()
     //[/UserResized]
 }
 
+
 void PluginEditor::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
 {
     //[UsercomboBoxChanged_Pre]
@@ -644,6 +674,7 @@ void PluginEditor::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
     {
         //[UserComboBoxCode_CBformat] -- add your combo box handling code here..
         panner_setChOrder(hPan, CBformat->getSelectedId());
+        powermap_setChOrder(hPm, CBformat->getSelectedId());
         //
         //[/UserComboBoxCode_CBformat]
     }
@@ -651,6 +682,7 @@ void PluginEditor::comboBoxChanged (juce::ComboBox* comboBoxThatHasChanged)
     {
         //[UserComboBoxCode_CBnorm] -- add your combo box handling code here..
         panner_setNormType(hPan, CBnorm->getSelectedId());
+        powermap_setNormType(hPm, CBnorm->getSelectedId());
         //[/UserComboBoxCode_CBnorm]
     }
 
@@ -702,6 +734,9 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
         refreshPanViewWindow = true;
         //[/UserButtonCode_TB_showOutputs]
     }
+    else if (buttonThatWasClicked == TB_PlayAll.get()) {
+        hVst->playAll = TB_PlayAll->getToggleState();
+    }
     //else if (buttonThatWasClicked == tb_loadJSON_src.get())
     //{
     //    //[UserButtonCode_tb_loadJSON_src] -- add your button handler code here..
@@ -746,9 +781,31 @@ void PluginEditor::buttonClicked (juce::Button* buttonThatWasClicked)
             panner_setLoudspeakerDist_deg(hPan, i, 0.0f);
             panner_setLoudspeakerDist_plot(hPan, i, 0.0f);
         }
+        hVst->isPlaying = false;
         refreshPanViewWindow = true;
         hVst->startCalibration();
         //[/UserButtonCode_tb_calibration]
+    }
+    else if (buttonThatWasClicked == tb_play.get())
+    {
+        if (switchOff) {
+            overlayWindow = nullptr;
+            switchOff = 0;
+            hVst->isPlaying = false;
+        }
+        else if (!TB_PlayAll->getToggleState() && hVst->loudspeakerNumber != 0) {
+            switchOff = 1;
+            overlayWindow.reset(new overlay(hVst));
+            addAndMakeVisible(overlayWindow.get());
+            overlayWindow->setBounds(200, 170, 500, 250);
+            overlayWindow->setAlwaysOnTop(true);
+            hVst->currentRecordingPosition = 0;
+            hVst->isPlaying = true;
+        }
+    }
+    else if (buttonThatWasClicked == tb_next.get()) {
+        if(hVst->loudspeakerNumber < panner_getNumLoudspeakers(hPan) && hVst->loudspeakerNumber != 0 && !TB_PlayAll->getToggleState())
+            hVst->next();
     }
 
     //[UserbuttonClicked_Post]
@@ -821,7 +878,19 @@ void PluginEditor::timerCallback(int timerID)
                 loudspeakerCoordsView_handle->setHasALabelChange(false);
                 hVst->setRefreshWindow(false);
             }
-
+            /* refresh the powermap display */
+            if ((overlayWindow != nullptr) && (hVst->getIsPlaying())) {
+                float* dirs_deg, * pmap;
+                int nDirs, pmapReady, pmapWidth, hfov, aspectRatio;
+                pmapReady = powermap_getPmap(hPm, &dirs_deg, &pmap, &nDirs, &pmapWidth, &hfov, &aspectRatio);
+                overlayWindow->setEnableTransparency(false);
+                if (pmapReady) {
+                    overlayWindow->refreshPowerMap(dirs_deg, pmap, nDirs, pmapWidth, hfov, aspectRatio);
+                }
+                if (overlayWindow->getFinishedRefresh()) {
+                    powermap_requestPmapUpdate(hPm);
+                }
+            }
             /* display warning message, if needed */
           /*  if ((hVst->getCurrentBlockSize() % panner_getFrameSize()) != 0){
                 currentWarning = k_warning_frameSize;

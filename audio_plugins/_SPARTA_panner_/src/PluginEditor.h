@@ -26,6 +26,7 @@
 #include "outputCoordsView.h"
 #include "_common.h"
 #include "pannerView.h"
+#include "overlay.h"
 #include "../../resources/SPARTALookAndFeel.h"
 
 
@@ -73,11 +74,12 @@ public:
     void buttonClicked (juce::Button* buttonThatWasClicked) override;
 
 
-
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
     PluginProcessor* hVst;
     void* hPan;
+    void* hPm;
+    int switchOff{};
     void timerCallback(int timerID) override;
 #ifndef PLUGIN_EDITOR_DISABLE_OPENGL
     std::unique_ptr<OpenGLGraphicsContextCustomShader> shader;
@@ -100,6 +102,9 @@ private:
     std::unique_ptr<pannerView> panWindow;
     bool refreshPanViewWindow;
 
+    std::unique_ptr<overlay> overlayWindow;
+    bool refreshOverlayWindow;
+
     /* warnings */
     SPARTA_WARNINGS currentWarning;
 
@@ -119,10 +124,15 @@ private:
     std::unique_ptr<juce::TextButton> tb_calibration;
     std::unique_ptr<juce::ComboBox> CBformat;
     std::unique_ptr<juce::ComboBox> CBnorm;
+    std::unique_ptr<juce::TextButton> tb_play;
+    std::unique_ptr<juce::TextButton> tb_next;
+    std::unique_ptr<juce::ToggleButton> TB_PlayAll;
+
 
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
+
 };
 
 //[EndFile] You can add extra defines here...

@@ -50,7 +50,7 @@ void powermap_create
     pData->covAvgCoeff = 0.0f;
     pData->pmapAvgCoeff = 0.666f;
     pData->nSources = 1;
-    pData->pmap_mode = PM_MODE_MUSIC;
+    pData->pmap_mode = PM_MODE_PWD;
     pData->HFOVoption = HFOV_360;
     pData->aspectRatioOption = ASPECT_RATIO_2_1;
     pData->chOrdering = CH_ACN;
@@ -735,6 +735,9 @@ int powermap_getPmap(void* const hPm, float** grid_dirs, float** pmap, int* nDir
             default:
             case ASPECT_RATIO_2_1:
                 (*aspectRatio) = 2;
+                break;
+            case ASPECT_RATIO_4_3:
+                (*aspectRatio) = 4.0f / 3.0f;
                 break;
         }
     }
