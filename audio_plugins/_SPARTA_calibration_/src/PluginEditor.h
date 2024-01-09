@@ -111,6 +111,7 @@ private:
     /* tooltips */
     SharedResourcePointer<TooltipWindow> tipWindow;
     std::unique_ptr<juce::ComboBox> pluginDescription; /* Dummy combo box to provide plugin description tooltip */
+    std::unique_ptr<juce::ComboBox> windowDescription; /* Dummy combo box to provide plugin description tooltip */
 
     //[/UserVariables]
 

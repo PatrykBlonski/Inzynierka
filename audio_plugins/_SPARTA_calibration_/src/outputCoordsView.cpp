@@ -72,6 +72,7 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
         distLabels[i]->setText(String(calibration_getLoudspeakerDist_deg(hPan, i)), dontSendNotification);
         distLabels[i]->setBounds(45, 8 + i * sensorEdit_height, 86, 16);
      //   distLabels[i]->addListener(this);
+        distLabels[i]->setTooltip(L"\u0394Dist is calculated as the difference between the distance of the speaker in question from the microphone and the arithmetic mean of the distances of all the calibrated speakers.");
 
         /* create and initialise azimuth labels */
         aziLabels[i].reset (new Label ("new label"));
@@ -84,6 +85,7 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
         aziLabels[i]->setText(String(calibration_getLoudspeakerAzi_deg(hPan, i)), dontSendNotification);
         aziLabels[i]->setBounds(95, 8 + i*sensorEdit_height, 86, 16);
    //     aziLabels[i]->addListener (this);
+        aziLabels[i]->setTooltip(L"Azimuth angle");
         
         /* create and initialise elevation labels */
         elevLabels[i].reset (new Label ("new label"));
@@ -94,6 +96,8 @@ outputCoordsView::outputCoordsView (PluginProcessor* ownerFilter, int _maxNCH, i
         elevlabels[i]->setTextBoxStyle (label::TextBoxLeft, true, 70, 20);*/
         elevLabels[i]->setText(String(calibration_getLoudspeakerElev_deg(hPan, i)), dontSendNotification);
         elevLabels[i]->setBounds(150, 8 + i*sensorEdit_height, 86, 16);
+        elevLabels[i]->setTooltip(L"Elevation angle");
+
 
     //    elevLabels[i]->addListener (this);
     }

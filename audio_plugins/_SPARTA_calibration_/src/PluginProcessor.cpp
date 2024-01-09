@@ -53,7 +53,7 @@ PluginProcessor::~PluginProcessor()
 
 void PluginProcessor::generateSineSweep(float sampleRate, juce::AudioBuffer<float>& sweepBuffer) {
     // Calculate the total number of samples
-    int totalSamples = static_cast<int>(duration * sampleRate);
+    int totalSamples = static_cast<int>(duration * sampleRate + 256);
 
     // Resize the sweepBuffer to hold the sine sweep
     sweepBuffer.setSize(1, totalSamples);  // Assuming mono
@@ -96,14 +96,14 @@ void PluginProcessor::startCalibration() {
     dists.clear();
     loudspeakerNumber = 0;
     juce::String fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
-    saveBufferToWav(SweepBuffer, fileName);
-    prepareToPlay(getSampleRate(), 480000);
-    recordingBuffer.setSize(calibration_getNumSources(hPan), getSampleRate() * duration);
+    //saveBufferToWav(SweepBuffer, fileName);
+    prepareToPlay(getSampleRate(), 480256);
+    recordingBuffer.setSize(calibration_getNumSources(hPan), getSampleRate() * duration + 256);
     recordingBuffer.clear();
     latency = 0;
-     juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
+     //juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
     //juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-    ImpulseBuffer = loadImpulseResponse(juceStringPath);
+    //ImpulseBuffer = loadImpulseResponse(juceStringPath);
     currentRecordingPosition = 0;
     calibrating = true;
     //phase = 0.0;
@@ -116,22 +116,23 @@ void PluginProcessor::endCalibration() {
     isRecording = false;
     calibrating = false;
    
-    juce::String fileName = "recorded_audio_mic_" + juce::String(loudspeakerNumber) + ".wav";
-    saveBufferToWav(recordingBuffer, fileName);
+    //juce::String fileName = "recorded_audio_mic_" + juce::String(loudspeakerNumber) + ".wav";
+    //saveBufferToWav(recordingBuffer, fileName);
    /* fileName = "recorded_audio_sweep_" + juce::String(loudspeakerNumber) + ".wav";
     saveBufferToWav(SweepBuffer, fileName);*/
-    distanceCalculation(SweepBuffer, ImpulseBuffer, loudspeakerNumber);
-    calibration_process(hPan, ImpulseBuffer.getArrayOfWritePointers(), calibration_getNumSources(hPan), ImpulseBuffer.getNumSamples(), loudspeakerNumber, 1);
+    distanceCalculation(SweepBuffer, recordingBuffer, loudspeakerNumber);
+    calibration_process(hPan, recordingBuffer.getArrayOfWritePointers(), calibration_getNumSources(hPan), recordingBuffer.getNumSamples(), loudspeakerNumber, 1);
     refreshWindow = true;
 
     loudspeakerNumber++;
     if (loudspeakerNumber < calibration_getNumLoudspeakers(hPan)) {
         latency = 0;
         if (playAll) {
-            ImpulseBuffer.clear();
+           /* ImpulseBuffer.clear();
             juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-            ImpulseBuffer = loadImpulseResponse(juceStringPath);
+            ImpulseBuffer = loadImpulseResponse(juceStringPath);*/
             currentRecordingPosition = 0;
+            recordingBuffer.clear();
             calibrating = true;
         }
        
@@ -145,9 +146,9 @@ void PluginProcessor::next() {
     currentRecordingPosition = 0;
     latency = 0;
 
-    ImpulseBuffer.clear();
-    juce::String juceStringPath = "D:\\STUDIA\\7sem\\impulse_responses\\conv_signal_" + juce::String(loudspeakerNumber) + ".wav";
-    ImpulseBuffer = loadImpulseResponse(juceStringPath);
+  /*  ImpulseBuffer.clear();
+    juce::String juceStringPath = "C:\\Users\\patry\\Desktop\\pomiar_panel2\\recorded_audio_mic_" + juce::String(loudspeakerNumber) + ".wav";
+    ImpulseBuffer = loadImpulseResponse(juceStringPath);*/
     recordingBuffer.clear();
 
     calibrating = true;
@@ -469,9 +470,9 @@ void PluginProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
             latency += 1;
     }
     if (isPlaying) {
-        if (currentRecordingPosition + 1024 <= ImpulseBuffer.getNumSamples()) {
+        if (currentRecordingPosition + 1024 <= recordingBuffer.getNumSamples()) {
             for (int i = 0; i < 4; i++) {
-                TempBuffer.copyFrom(i, 0, ImpulseBuffer, i, currentRecordingPosition, 1024);
+                TempBuffer.copyFrom(i, 0, recordingBuffer, i, currentRecordingPosition, 1024);
             }
             bufferData = TempBuffer.getArrayOfWritePointers();
             currentRecordingPosition+=1024;

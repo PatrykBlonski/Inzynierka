@@ -1,4 +1,4 @@
-/*
+﻿/*
   ==============================================================================
 
   This is an automatically generated GUI class created by the Projucer!
@@ -263,10 +263,18 @@ PluginEditor::PluginEditor (PluginProcessor* ownerFilter)
     /* Plugin description */
     pluginDescription.reset (new juce::ComboBox ("new combo box"));
     addAndMakeVisible (pluginDescription.get());
-    pluginDescription->setBounds (0, 0, 200, 32);
+    pluginDescription->setBounds (300, 30, 200, 32);
     pluginDescription->setAlpha(0.0f);
     pluginDescription->setEnabled(false);
-    pluginDescription->setTooltip(TRANS("A frequency-dependent 3D calibration based on the Vector-base Amplitude Panning (VBAP) method, which can offer more consistent loudness when sources are panned in-between the loudspeaker directions when compared to frequency-independent VBAP."));
+    pluginDescription->setTooltip(TRANS("The distances displayed in this window are normalised to improve the visibility of the differences in the distances of the loudspeakers from the microphone, located at point (0,0)."));
+
+    //int x = 380, y = 32, width = 176, height = 30;
+   /* windowDescription.reset(new juce::ComboBox("new combo box"));
+    addAndMakeVisible(pluginDescription.get());
+    windowDescription->setBounds(370, 2, 186, 80);
+    windowDescription->setAlpha(0.0f);
+    windowDescription->setEnabled(false);
+    windowDescription->setTooltip("The distances displayed in this window are normalised to improve the visibility of the differences in the distances of the loudspeakers from the microphone, located at point (0,0).");*/
 
 	/* Specify screen refresh rate */
     startTimer(TIMER_GUI_RELATED, 40);
@@ -521,8 +529,11 @@ void PluginEditor::paint (juce::Graphics& g)
     }
 
     {
-        int x = 713, y = 123, width = 165, height = 28;
-        juce::String text (juce::CharPointer_UTF8 ("#    Dist      Azi\xc2\xb0     Elev\xc2\xb0"));
+        int x = 706, y = 123, width = 182, height = 28;
+        wchar_t* text_prev = L"#    Dist\u00AF[m]      Azi\u00B0     Elev\u00B0";
+        //juce::String text(juce::CharPointer_UTF8("#    Dist\xc2\xaf      Azi\xc2\xb0     Elev\xc2\xb0"));
+        juce::String text(juce::CharPointer_UTF16(L"#  \u0394Dist[m]   Azi\u00B0     Elev\u00B0"));
+        
         juce::Colour fillColour = juce::Colours::white;
         //[UserPaintCustomArguments] Customize the painting arguments here..
         //[/UserPaintCustomArguments]
