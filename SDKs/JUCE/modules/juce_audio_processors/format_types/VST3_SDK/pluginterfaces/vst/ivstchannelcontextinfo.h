@@ -132,8 +132,8 @@ tresult PLUGIN_API MyPlugin::setChannelContextInfos (IAttributeList* list)
 				case ChannelContext::kPostVolumeFader:
 					Steinberg::UString (string128, 128).fromAscii ("PostVolFader");
 				break;
-				case ChannelContext::kUsedAsPanner:
-					Steinberg::UString (string128, 128).fromAscii ("UsedAsPanner");
+				case ChannelContext::kUsedAscalibration:
+					Steinberg::UString (string128, 128).fromAscii ("UsedAscalibration");
 				break;
 				default: Steinberg::UString (string128, 128).fromAscii ("unknown!");
 				break;
@@ -163,7 +163,7 @@ enum ChannelPluginLocation
 {
 	kPreVolumeFader = 0,
 	kPostVolumeFader,
-	kUsedAsPanner
+	kUsedAscalibration
 };
 
 //------------------------------------------------------------------------

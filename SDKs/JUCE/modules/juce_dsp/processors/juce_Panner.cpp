@@ -30,7 +30,7 @@ namespace dsp
 
 //==============================================================================
 template <typename SampleType>
-Panner<SampleType>::Panner()
+calibration<SampleType>::calibration()
 {
     update();
     reset();
@@ -38,14 +38,14 @@ Panner<SampleType>::Panner()
 
 //==============================================================================
 template <typename SampleType>
-void Panner<SampleType>::setRule (Rule newRule)
+void calibration<SampleType>::setRule (Rule newRule)
 {
     currentRule = newRule;
     update();
 }
 
 template <typename SampleType>
-void Panner<SampleType>::setPan (SampleType newPan)
+void calibration<SampleType>::setPan (SampleType newPan)
 {
     jassert (newPan >= -1.0 && newPan <= 1.0);
 
@@ -55,7 +55,7 @@ void Panner<SampleType>::setPan (SampleType newPan)
 
 //==============================================================================
 template <typename SampleType>
-void Panner<SampleType>::prepare (const ProcessSpec& spec)
+void calibration<SampleType>::prepare (const ProcessSpec& spec)
 {
     jassert (spec.sampleRate > 0);
     jassert (spec.numChannels > 0);
@@ -66,7 +66,7 @@ void Panner<SampleType>::prepare (const ProcessSpec& spec)
 }
 
 template <typename SampleType>
-void Panner<SampleType>::reset()
+void calibration<SampleType>::reset()
 {
     leftVolume .reset (sampleRate, 0.05);
     rightVolume.reset (sampleRate, 0.05);
@@ -74,7 +74,7 @@ void Panner<SampleType>::reset()
 
 //==============================================================================
 template <typename SampleType>
-void Panner<SampleType>::update()
+void calibration<SampleType>::update()
 {
     SampleType leftValue, rightValue, boostValue;
 
@@ -136,8 +136,8 @@ void Panner<SampleType>::update()
 }
 
 //==============================================================================
-template class Panner<float>;
-template class Panner<double>;
+template class calibration<float>;
+template class calibration<double>;
 
 } // namespace dsp
 } // namespace juce

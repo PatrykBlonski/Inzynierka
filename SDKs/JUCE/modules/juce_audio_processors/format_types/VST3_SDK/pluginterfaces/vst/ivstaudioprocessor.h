@@ -74,8 +74,8 @@ const CString kInstrumentSampler	= "Instrument|Sampler";	///< Instrument based o
 const CString kInstrumentSynth		= "Instrument|Synth";	///< Instrument based on Synthesis
 const CString kInstrumentSynthSampler = "Instrument|Synth|Sampler";	///< Instrument based on Synthesis and Samples
 
-const CString kSpatial				= "Spatial";		///< used for SurroundPanner
-const CString kSpatialFx			= "Spatial|Fx";		///< used for SurroundPanner and as insert effect
+const CString kSpatial				= "Spatial";		///< used for Surroundcalibration
+const CString kSpatialFx			= "Spatial|Fx";		///< used for Surroundcalibration and as insert effect
 const CString kOnlyRealTime			= "OnlyRT";			///< indicates that it supports only realtime process call, no processing faster than realtime
 const CString kOnlyOfflineProcess	= "OnlyOfflineProcess";	///< used for plug-in offline processing  (will not work as normal insert plug-in)
 const CString kOnlyARA				= "OnlyARA";		///< used for plug-ins that require ARA to operate (will not work as normal insert plug-in)
@@ -83,7 +83,7 @@ const CString kOnlyARA				= "OnlyARA";		///< used for plug-ins that require ARA 
 const CString kNoOfflineProcess		= "NoOfflineProcess";	///< will be NOT used for plug-in offline processing (will work as normal insert plug-in)
 const CString kUpDownMix			= "Up-Downmix";		///< used for Mixconverter/Up-Mixer/Down-Mixer
 const CString kAnalyzer			    = "Analyzer";	    ///< Meter, Scope, FFT-Display, not selectable as insert plug-in
-const CString kAmbisonics			= "Ambisonics";		///< used for Ambisonics channel (FX or Panner/Mixconverter/Up-Mixer/Down-Mixer when combined with other category)
+const CString kAmbisonics			= "Ambisonics";		///< used for Ambisonics channel (FX or calibration/Mixconverter/Up-Mixer/Down-Mixer when combined with other category)
 
 const CString kMono					= "Mono";			///< used for Mono only plug-in [optional]
 const CString kStereo				= "Stereo";			///< used for Stereo only plug-in [optional]

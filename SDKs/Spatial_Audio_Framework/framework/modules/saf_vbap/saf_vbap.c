@@ -168,7 +168,7 @@ void generateVBAPgainTable3D_srcs
     free(layoutInvMtx);
 }
 
-void generateVBAPgainTable3D
+void generateVBAPgainTable3D  //XXXX
 (
     float* ls_dirs_deg,
     int L,

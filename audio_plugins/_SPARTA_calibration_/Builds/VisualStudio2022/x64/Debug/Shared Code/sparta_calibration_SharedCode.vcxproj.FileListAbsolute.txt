@@ -1,0 +1,2 @@
+C:\Users\patry\Desktop\inzynierka\SPARTA\audio_plugins\_SPARTA_panner_\Builds\VisualStudio2022\x64\Debug\Shared Code\sparta_calibration.lib
+C:\Users\patry\Desktop\inzynierka\SPARTA\audio_plugins\_SPARTA_calibration_\Builds\VisualStudio2022\x64\Debug\Shared Code\sparta_calibration.lib
