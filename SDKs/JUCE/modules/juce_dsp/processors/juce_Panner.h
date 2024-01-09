@@ -28,7 +28,7 @@ namespace juce
 namespace dsp
 {
 
-enum class PannerRule
+enum class calibrationRule
 {
     linear,          // regular 6 dB or linear panning rule, allows the panned sound to be
                      // perceived as having a constant level when summed to mono
@@ -48,15 +48,15 @@ enum class PannerRule
     @tags{DSP}
 */
 template <typename SampleType>
-class Panner
+class calibration
 {
 public:
     //==============================================================================
-    using Rule = PannerRule;
+    using Rule = calibrationRule;
 
     //==============================================================================
     /** Constructor. */
-    Panner();
+    calibration();
 
     //==============================================================================
     /** Sets the panning rule. */
